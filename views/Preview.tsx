@@ -3,7 +3,8 @@ import { ViewState, ResumeData } from '../types';
 import { Icons } from '../components/Icons';
 import { Button } from '../components/Button';
 import { updateResume } from '../services/resumeService';
-import { generatePDFFromElement } from '../services/pdfService';
+import { generateTemplatePDFFromElement } from '../services/templatePdfService';
+import { ResumeTemplate } from '../types';
 
 interface PreviewProps {
   setView: (view: ViewState) => void;
@@ -57,7 +58,8 @@ export const Preview: React.FC<PreviewProps> = ({ setView, content, resumeData, 
         ? `${resumeData.job_title}-resume-${new Date().toISOString().split('T')[0]}.pdf`
         : `resume-${new Date().toISOString().split('T')[0]}.pdf`;
       
-      await generatePDFFromElement(resumeContentRef.current, filename);
+      const template = (resumeData?.template_selected as ResumeTemplate) || ResumeTemplate.MODERN;
+      await generateTemplatePDFFromElement(resumeContentRef.current, template, filename);
     }
   };
 

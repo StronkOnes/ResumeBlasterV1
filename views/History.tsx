@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { ViewState, ResumeData, OptimizationMode } from '../types';
 import { Icons } from '../components/Icons';
-import { generatePDFFromContent } from '../services/pdfService';
+import { generateTemplatePDF } from '../services/templatePdfService';
+import { ResumeTemplate } from '../types';
 
 interface HistoryProps {
   setView: (view: ViewState) => void;
   resumes: ResumeData[];
   isPro: boolean;
   onPreviewResume?: (resume: ResumeData) => void;
+  onEditResume?: (resume: ResumeData) => void;
 }
 
-export const History: React.FC<HistoryProps> = ({ setView, resumes, isPro, onPreviewResume }) => {
+export const History: React.FC<HistoryProps> = ({ setView, resumes, isPro, onPreviewResume, onEditResume }) => {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const handlePreview = (resume: ResumeData) => {
@@ -19,11 +21,18 @@ export const History: React.FC<HistoryProps> = ({ setView, resumes, isPro, onPre
     }
   };
 
+  const handleEdit = (resume: ResumeData) => {
+    if (onEditResume) {
+      onEditResume(resume);
+    }
+  };
+
   const handleDownload = async (resume: ResumeData) => {
     setDownloadingId(resume.id || null);
     try {
       const filename = `${resume.job_title || 'resume'}-${new Date().toISOString().split('T')[0]}.pdf`;
-      await generatePDFFromContent(resume.enhanced_content, filename);
+      const template = (resume.template_selected as ResumeTemplate) || ResumeTemplate.MODERN;
+      await generateTemplatePDF(resume.enhanced_content, template, filename);
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
@@ -128,7 +137,11 @@ export const History: React.FC<HistoryProps> = ({ setView, resumes, isPro, onPre
                     'Download'
                   )}
                 </button>
-                <button className="w-10 flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-xl transition-colors">
+                <button 
+                  onClick={() => handleEdit(resume)}
+                  className="w-10 flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-xl transition-colors hover:text-blue-600 dark:hover:text-blue-400"
+                  title="Edit Resume"
+                >
                   <Icons.PenTool size={16} />
                 </button>
               </div>

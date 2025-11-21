@@ -5,7 +5,8 @@ import { Editor } from './views/Editor';
 import { Preview } from './views/Preview';
 import { History } from './views/History';
 import { Upgrade } from './views/Upgrade';
-import { Auth } from './views/Auth'; // Import Auth component
+import { Auth } from './views/Auth';
+import { EditResume } from './views/EditResume';
 import { ViewState, ResumeData, OptimizationMode, ResumeTemplate } from './types';
 import { supabase } from './services/supabaseClient'; // Import Supabase client
 import { Session } from '@supabase/supabase-js'; // Import Session type
@@ -16,6 +17,7 @@ export default function App() {
   const [currentView, setCurrentView] = useState<ViewState>(ViewState.HOME); // Always start at the Home/Landing page
   const [generatedContent, setGeneratedContent] = useState<string>('');
   const [currentResume, setCurrentResume] = useState<ResumeData | null>(null);
+  const [editingResume, setEditingResume] = useState<ResumeData | null>(null);
   const [isPro, setIsPro] = useState(false);
   const [resumes, setResumes] = useState<ResumeData[]>([]); // Initialize empty, will fetch from Supabase
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -80,6 +82,17 @@ export default function App() {
     setCurrentView(ViewState.PREVIEW);
   };
 
+  const handleEditResume = (resume: ResumeData) => {
+    setEditingResume(resume);
+    setCurrentView(ViewState.EDIT);
+  };
+
+  const handleEditSaveSuccess = (updatedResume: ResumeData) => {
+    // Update the resume in the list
+    setResumes(resumes.map(r => r.id === updatedResume.id ? updatedResume : r));
+    setEditingResume(null);
+  };
+
   const handleResumeGeneration = async (originalContent: string, enhancedContent: string, mode: OptimizationMode, template: ResumeTemplate, jobDescription?: string, jobTitle?: string) => {
     setGeneratedContent(enhancedContent);
     
@@ -121,7 +134,7 @@ export default function App() {
       return <div>Loading...</div>; // Or a proper loading spinner component
     }
 
-    const protectedViews: ViewState[] = [ViewState.EDITOR, ViewState.TAILOR, ViewState.PREVIEW, ViewState.HISTORY, ViewState.UPGRADE];
+    const protectedViews: ViewState[] = [ViewState.EDITOR, ViewState.TAILOR, ViewState.PREVIEW, ViewState.HISTORY, ViewState.UPGRADE, ViewState.EDIT];
     if (protectedViews.includes(currentView) && !session) {
       // If user tries to access a protected view without being logged in, show Auth
       return <Auth onAuthSuccess={() => setCurrentView(ViewState.EDITOR)} setView={setCurrentView} />;
@@ -143,13 +156,29 @@ export default function App() {
           }
         }} />;
       case ViewState.HISTORY:
-        // Pass user ID to History to fetch user-specific resumes
         return <History 
           setView={setCurrentView} 
           resumes={resumes} 
           isPro={isPro}
           onPreviewResume={handlePreviewSavedResume}
+          onEditResume={handleEditResume}
         />;
+      case ViewState.EDIT:
+        return editingResume ? (
+          <EditResume 
+            setView={setCurrentView}
+            resume={editingResume}
+            onSaveSuccess={handleEditSaveSuccess}
+          />
+        ) : (
+          <History 
+            setView={setCurrentView} 
+            resumes={resumes} 
+            isPro={isPro}
+            onPreviewResume={handlePreviewSavedResume}
+            onEditResume={handleEditResume}
+          />
+        );
       case ViewState.UPGRADE:
         return <Upgrade setView={setCurrentView} onUpgrade={() => setIsPro(true)} />;
       default:
