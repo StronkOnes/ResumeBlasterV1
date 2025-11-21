@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { ViewState, OptimizationMode } from '../types';
+import { ViewState, OptimizationMode, ResumeTemplate } from '../types';
 import { Icons } from '../components/Icons';
 import { Button } from '../components/Button';
+import { TemplateSelector } from '../components/TemplateSelector';
 import { generateResumeContent } from '../services/aiService';
 
 interface EditorProps {
   setView: (view: ViewState) => void;
-  setGeneratedResume: (originalContent: string, enhancedContent: string, mode: OptimizationMode, jobDescription?: string, jobTitle?: string) => void;
+  setGeneratedResume: (originalContent: string, enhancedContent: string, mode: OptimizationMode, template: ResumeTemplate, jobDescription?: string, jobTitle?: string) => void;
   initialJobMode?: boolean;
 }
 
@@ -15,6 +16,7 @@ export const Editor: React.FC<EditorProps> = ({ setView, setGeneratedResume, ini
   const [content, setContent] = useState('');
   const [jobDesc, setJobDesc] = useState('');
   const [mode, setMode] = useState<OptimizationMode>(OptimizationMode.NO_HALLUCINATIONS);
+  const [selectedTemplate, setSelectedTemplate] = useState<ResumeTemplate>(ResumeTemplate.MODERN);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -38,7 +40,7 @@ export const Editor: React.FC<EditorProps> = ({ setView, setGeneratedResume, ini
         initialJobMode ? jobDesc : undefined,
         jobTitle
       );
-      setGeneratedResume(content, result, mode, initialJobMode ? jobDesc : undefined, jobTitle);
+      setGeneratedResume(content, result, mode, selectedTemplate, initialJobMode ? jobDesc : undefined, jobTitle);
       setView(ViewState.PREVIEW);
     } catch (err) {
       setError("Failed to generate resume. Please try again.");
@@ -123,6 +125,14 @@ export const Editor: React.FC<EditorProps> = ({ setView, setGeneratedResume, ini
               />
             </div>
           )}
+        </div>
+
+        {/* Template Selection */}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-black/30 border border-slate-100 dark:border-slate-800 transition-colors">
+          <TemplateSelector 
+            selectedTemplate={selectedTemplate}
+            onSelectTemplate={setSelectedTemplate}
+          />
         </div>
 
         {/* Mode Selection */}

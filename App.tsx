@@ -6,7 +6,7 @@ import { Preview } from './views/Preview';
 import { History } from './views/History';
 import { Upgrade } from './views/Upgrade';
 import { Auth } from './views/Auth'; // Import Auth component
-import { ViewState, ResumeData, OptimizationMode } from './types';
+import { ViewState, ResumeData, OptimizationMode, ResumeTemplate } from './types';
 import { supabase } from './services/supabaseClient'; // Import Supabase client
 import { Session } from '@supabase/supabase-js'; // Import Session type
 import { fetchUserResumes } from './services/resumeService';
@@ -80,7 +80,7 @@ export default function App() {
     setCurrentView(ViewState.PREVIEW);
   };
 
-  const handleResumeGeneration = async (originalContent: string, enhancedContent: string, mode: OptimizationMode, jobDescription?: string, jobTitle?: string) => {
+  const handleResumeGeneration = async (originalContent: string, enhancedContent: string, mode: OptimizationMode, template: ResumeTemplate, jobDescription?: string, jobTitle?: string) => {
     setGeneratedContent(enhancedContent);
     
     if (session?.user?.id) {
@@ -89,10 +89,11 @@ export default function App() {
         job_title: jobTitle,
         original_content: originalContent,
         enhanced_content: enhancedContent,
+        template_selected: template,
         enhancement_mode: mode,
         job_description_used: jobDescription,
         generated_at: new Date().toISOString(),
-        // template_selected, file_path_pdf, file_path_docx will be added in later stages
+        // file_path_pdf, file_path_docx will be added in later stages
       };
 
       const { data, error } = await supabase
@@ -132,9 +133,9 @@ export default function App() {
       case ViewState.AUTH:
         return <Auth onAuthSuccess={() => setCurrentView(ViewState.EDITOR)} setView={setCurrentView} />;
       case ViewState.EDITOR:
-        return <Editor setView={setCurrentView} setGeneratedResume={(originalContent, enhancedContent, mode, jobDescription, jobTitle) => handleResumeGeneration(originalContent, enhancedContent, mode, jobDescription, jobTitle)} />;
+        return <Editor setView={setCurrentView} setGeneratedResume={(originalContent, enhancedContent, mode, template, jobDescription, jobTitle) => handleResumeGeneration(originalContent, enhancedContent, mode, template, jobDescription, jobTitle)} />;
       case ViewState.TAILOR:
-        return <Editor setView={setCurrentView} setGeneratedResume={(originalContent, enhancedContent, mode, jobDescription, jobTitle) => handleResumeGeneration(originalContent, enhancedContent, mode, jobDescription, jobTitle)} initialJobMode={true} />;
+        return <Editor setView={setCurrentView} setGeneratedResume={(originalContent, enhancedContent, mode, template, jobDescription, jobTitle) => handleResumeGeneration(originalContent, enhancedContent, mode, template, jobDescription, jobTitle)} initialJobMode={true} />;
       case ViewState.PREVIEW:
         return <Preview setView={setCurrentView} content={generatedContent} resumeData={currentResume} onSaveSuccess={(resume) => {
           if (resume.id) {

@@ -13,6 +13,20 @@ export enum OptimizationMode {
   POWER_BOOST = 'power_boost'
 }
 
+export enum ResumeTemplate {
+  MODERN = 'modern',
+  CLASSIC = 'classic',
+  EXECUTIVE = 'executive'
+}
+
+export interface TemplateInfo {
+  id: ResumeTemplate;
+  name: string;
+  description: string;
+  preview: string; // Path to preview image
+  docxPath: string; // Path to DOCX template
+}
+
 export interface ResumeData {
   id?: string; // Supabase will generate this
   user_id: string;

@@ -1,5 +1,6 @@
-import { OptimizationMode } from "../types";
+import { OptimizationMode, ResumeTemplate } from "../types";
 import { GoogleGenAI } from "@google/genai";
+import { getTemplatePromptInstructions } from "../constants/templates";
 
 // Define the Gemini model to use
 const GEMINI_MODEL = "gemini-2.5-flash"; // Or "gemini-2.5-flash" if preferred, matching the original in resume-blaster2
@@ -25,6 +26,7 @@ const RESUME_CONTEXT_PROFILE = {
 const buildGeminiPrompt = (
     rawContent: string,
     mode: OptimizationMode,
+    template: ResumeTemplate,
     jobDescription?: string,
     jobTitle?: string
 ): { systemInstruction: string, userContent: string } => {
@@ -38,15 +40,29 @@ const buildGeminiPrompt = (
 
   if (mode === OptimizationMode.NO_HALLUCINATIONS) {
     systemInstruction += `
-      - Improve grammar, structure, and phrasing based ONLY on provided info.
+      STRICT MODE RULES (No Hallucinations):
+      - Transform generic statements into high-impact professional phrases using ONLY the provided information.
+      - Quantify results whenever the information allows (e.g., "Led project" → "Led project to completion 2 weeks ahead of schedule").
+      - Use powerful action verbs and eliminate passive voice entirely.
+      - Remove all filler words, repetition, and CV clichés.
+      - Ensure every bullet point is concise, direct, and optimized for ATS algorithms.
+      - Convert vague statements into measurable impact where data exists.
+      - Maintain US English spelling and grammar consistency.
       - Do NOT add new skills, tools, or achievements not explicitly mentioned.
-      - Fix formatting and flow.
+      - Do NOT invent facts, dates, or accomplishments.
     `;
   } else {
     systemInstruction += `
-      - Infer industry-standard skills, tools, and achievements based on the job title: "${jobTitle || 'Unknown'}".
-      - Fill in gaps with high-probability professional keywords.
-      - Make it sound impressive and senior-level.
+      POWER BOOST MODE RULES (AI Enhancement):
+      - Infer industry-standard skills, tools, and achievements for "${jobTitle || 'Unknown'}" role.
+      - Add ONLY credible, interview-defensible enhancements that align with the user's background.
+      - Never contradict provided information (e.g., don't claim leadership if user only did junior work).
+      - Use advanced professional phrasing, active voice, and industry-accepted buzzwords.
+      - Quantify achievements with realistic, plausible metrics (e.g., "increased efficiency by 18%").
+      - Fill gaps with high-probability skills that match the job title and industry trends.
+      - Structure output per latest resume design trends: impactful summary, strategic keywords, quantified results.
+      - Make it sound impressive and senior-level while maintaining credibility.
+      - All additions must be easily justifiable in an interview setting.
     `;
   }
 
@@ -57,9 +73,13 @@ const buildGeminiPrompt = (
     `;
   }
 
+  // Add template-specific formatting instructions
+  systemInstruction += getTemplatePromptInstructions(template);
+
   systemInstruction += `
     Output Format:
     Return ONLY the resume content in clean Markdown format. Do not include conversational filler before or after.
+    Format the content according to the template style specified above.
   `;
 
     const userContent = `User Job Title: ${jobTitle}\n\nUser Raw Content:\n${rawContent}`
@@ -70,6 +90,7 @@ const buildGeminiPrompt = (
 export const generateResumeContent = async (
   rawContent: string,
   mode: OptimizationMode,
+  template: ResumeTemplate = ResumeTemplate.MODERN,
   jobDescription?: string,
   jobTitle?: string
 ): Promise<string> => {
@@ -83,7 +104,7 @@ export const generateResumeContent = async (
     // Use the GoogleGenerativeAI library - pass apiKey as an object for browser environment
     const genAI = new GoogleGenAI({ apiKey: geminiApiKey });
 
-    const { systemInstruction, userContent } = buildGeminiPrompt(rawContent, mode, jobDescription, jobTitle);
+    const { systemInstruction, userContent } = buildGeminiPrompt(rawContent, mode, template, jobDescription, jobTitle);
 
     try {
         const response = await genAI.models.generateContent({
