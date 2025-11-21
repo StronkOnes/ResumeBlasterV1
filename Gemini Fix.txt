@@ -1,0 +1,39 @@
+Fix Gemini AI Integration
+The current implementation of Gemini AI in 
+services/aiService.ts
+ has potential issues with API key handling and hardcoded configuration. This plan outlines the steps to make it more robust and "out of the box" ready.
+
+User Review Required
+IMPORTANT
+
+API Key Configuration: The user must ensure VITE_GEMINI_API_KEY is set in their .env or 
+.env.local
+ file.
+
+Proposed Changes
+Services
+[MODIFY] 
+aiService.ts
+Remove the hardcoded GEMINI_API_ENDPOINT constant that embeds the API key.
+Refactor 
+callGeminiApi
+ to construct the endpoint URL dynamically, including the API key.
+Add a check for the API key inside 
+callGeminiApi
+ and throw a clear error if it's missing.
+(Optional) Allow model configuration, though gemini-pro is a reasonable default.
+Change the default provider in 
+generateResumeContent
+ to 'gemini' to match the UI preference.
+Verification Plan
+Manual Verification
+Check API Key: Ensure VITE_GEMINI_API_KEY is present in 
+.env.local
+.
+Run Application: Start the app using npm run dev.
+Generate Resume:
+Navigate to the Editor.
+Select "Gemini" as the provider (should be default).
+Enter dummy text and click "Enhance".
+Verify that the request is sent to the Gemini API and a response is received.
+Check the browser console for any errors.

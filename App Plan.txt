@@ -1,0 +1,347 @@
+Resume Blaster: AI-Powered Resume Builder - No-Code Implementation Guide
+1. Project Overview & Core Features
+App Name: Resume Blaster
+Core Value Proposition: An AI tool that transforms raw text or existing resumes into polished, professional documents optimized for ATS and human recruiters. Users can choose between a "No Hallucinations" mode (strictly factual) or an "AI Power Boost" mode (creative enhancement).
+
+Key Functionalities:
+Two Primary Modes:
+Enhance & Optimize (No Hallucinations): Improves grammar, structure, and phrasing based only on the provided information.
+Tailor & Power Boost (Hallucination Mode): Generates a "perfect 10/10" resume by inferring industry-standard skills, tools, and achievements based on the job title, even if not explicitly mentioned.
+Input Methods: Upload a resume file (PDF, DOCX) OR paste text content.
+Template Selection: Three distinct, visually appealing templates (excluding plain text).
+Output Formats: Download as PDF, Word (.docx), or Google Docs link.
+User Management: Free tier (3 resumes/month), Pro subscription ($8.99/month), and Pay-Per-Use ($14.99/resume).
+Resume History: Save and manage up to 5 most recent resumes for free users; up to 10 for Pro users.
+Backend: Supabase for authentication, database, and storage. Google Sheets for financial transaction logging (optional, for simplicity).
+2. Tech Stack & Architecture
+This architecture is designed for no-code platforms like Glide, Adalo, or Bubble. It prioritizes modularity so you can swap out the AI provider later.
+
+Frontend UI
+Glide / Adalo / Bubble
+These are powerful no-code app builders with drag-and-drop interfaces, perfect for mobile and web.
+Backend DB
+Supabase
+Free, open-source, provides PostgreSQL, Auth, Storage, and Realtime APIs. Perfect for user profiles.
+File Storage
+Supabase Storage
+Securely stores generated resumes (PDF, DOCX).
+AI Engine
+Qwen via Alibaba Cloud API
+Your specified choice. Supabase can trigger functions that call external APIs.
+Payment Gateway
+Stripe
+Industry standard, easy to integrate with Supabase and no-code tools for subscriptions and one-time fees.
+Financial Log
+Google Sheets
+(via Zapier/Make.com)
+Simple, auditable log for transactions. Can be replaced with a Supabase table later.
+AI Prompting
+Custom JSON Context Profile (based on
+TheUltimateJSONContextPromptingGuideforChatGPT.pdf
+)
+Ensures consistent, high-quality, and controllable AI output.
+3. Detailed User Flow & Screens
+Screen 1: Home / Input Screen
+Header: "Resume Blaster"
+Sub-header: "Generate a 10/10 resume in seconds."
+Section 1: Choose Input Method
+Button: "Upload Resume File" (triggers file picker for PDF/DOCX)
+Text Area: "Or paste your resume content here..." (Placeholder text: "Paste your current resume text here...")
+Section 2: Select Enhancement Mode
+Toggle Switch or Radio Buttons:
+Option A: "Enhance & Optimize (No Hallucinations)" - Improves what you provide.
+Option B: "Tailor & Power Boost (AI Hallucination Mode)" - Creates the best possible resume.
+Section 3: Template Selection (Optional for first version)
+Display 3 thumbnail previews of different resume designs. User selects one.
+Action Button: "🚀 Enhance & Optimize to 9/10" or "🎯 Tailor & Optimize to 9/10" (Based on selected mode).
+Screen 2: Job Tailoring Screen (Optional Feature)
+Header: "Tailor to Job"
+Sub-header: "Customize your resume for specific job descriptions (up to 20)."
+Section 1: Upload Resume (Same as Screen 1)
+Section 2: Add Job Descriptions
+Text Field 1: "Job title (e.g., Software Engineer)"
+Text Area 1: "Paste job description here..."
+Button: "+ Add Job Description" (Adds more fields, up to 20 total)
+Action Button: "🎯 Tailor & Optimize to 9/10"
+Screen 3: Upgrade / Payment Screen
+Header: "UPGRADE"
+Free Tier Card:
+Title: "Free"
+Text: "Up to 3 resumes per month"
+Bullet Points: "• No email delivery", "• No history saving"
+Pro Tier Card:
+Title: "Pro"
+Price: "$8.99/month" (Label: "BEST VALUE")
+Text: "Unlimited resumes per month"
+Bullet Points: "• Email delivery", "• 10 resumes saved"
+Button: "Choose Pro"
+Pay-Per-Use Card:
+Title: "One-Time Boost"
+Price: "$14.99"
+Text: "Generate one premium resume now."
+Button: "Buy One Resume"
+Screen 4: My Resumes / History Screen
+Header: "My Resumes"
+Info Banner: "Pro users can access their last 10 saved resumes."
+List View: Each resume entry shows:
+Title: "Resume – [Date] • [Time]"
+Subtitle: "Tailored Resume" or "Standard Polish"
+Action Buttons: "Preview", "Download", "Edit"
+Footer Button (for Free Users): "Upgrade to Pro" (links to Screen 3)
+4. Backend Setup with Supabase
+Step 1: Create Supabase Project
+Go to supabase.io and create a new project.
+Note down your Project URL and API Key.
+Step 2: Define Database Schema (Tables)
+Table: users
+id (UUID, Primary Key, Default: gen_random_uuid())
+email (Text, Unique)
+full_name (Text)
+subscription_tier (Text, Default: 'free', Options: 'free', 'pro')
+resume_count (Integer, Default: 0) // Tracks free tier usage
+created_at (Timestamp, Default: now())
+Table: resumes
+id (UUID, Primary Key, Default: gen_random_uuid())
+user_id (UUID, Foreign Key to users.id)
+original_content (Text) // The raw text or parsed content from the uploaded file.
+enhanced_content (Text) // The AI-generated, polished text.
+template_selected (Text, e.g., 'modern', 'classic', 'executive')
+enhancement_mode (Text, e.g., 'no_hallucination', 'hallucination')
+file_path_pdf (Text) // Path to the stored PDF in Supabase Storage.
+file_path_docx (Text) // Path to the stored DOCX in Supabase Storage.
+generated_at (Timestamp, Default: now())
+job_description_used (Text, Optional) // For tailoring feature.
+Table: payments (Optional for initial version)
+id (UUID, Primary Key)
+user_id (UUID)
+amount (Numeric)
+currency (Text, e.g., 'USD')
+payment_status (Text, e.g., 'succeeded', 'failed')
+stripe_payment_id (Text) // To link with Stripe.
+created_at (Timestamp)
+Step 3: Configure Supabase Storage
+In the Supabase dashboard, go to Storage.
+Create a bucket named resumes.
+Set public access rules to allow authenticated users to read and write their own files.
+Step 4: Set Up Authentication
+Enable Email/Password authentication in Supabase.
+Configure the redirect URLs for your frontend app (e.g., https://yourapp.glideapp.io/callback).
+5. AI Prompting Strategy: The JSON Context Profile for Qwen
+This is the heart of your app. You will configure this prompt in your no-code tool's logic or via a Supabase Function. The goal is to give Qwen a clear, structured instruction set.
+
+Core Prompt Structure (Based on TheUltimateJSONContextPromptingGuideforChatGPT.pdf)
+json
+
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+⌄
+⌄
+⌄
+⌄
+⌄
+⌄
+⌄
+⌄
+⌄
+⌄
+⌄
+⌄
+⌄
+{
+  "identity": {
+    "role": "You are a world-class Career Advisor and Resume Writer with 15+ years of experience in HR and talent acquisition.",
+    "persona": "The Strategic Optimizer",
+    "credentials": "Certified Professional Resume Writer (CPRW), expert in ATS optimization, and skilled in crafting resumes for all industries."
+  },
+  "audience": {
+    "profile": "A job seeker who needs a polished, professional resume. They may provide minimal details or a full draft.",
+    "expectations": "They expect a clean, error-free, and compelling resume that highlights their strengths and gets past automated screening systems (ATS)."
+  },
+  "objective": {
+    "task": "Analyze the user's input and generate a complete, formatted resume in plain text, ready for conversion to PDF/DOCX.",
+    "outcome": "Ensure the output is a 10/10 resume that is accurate, persuasive, and tailored to the user's stated goals or inferred role."
+  },
+  "contextual_knowledge": {
+    "project_info": "The user has chosen between two modes: 'No Hallucinations' (strictly factual) or 'AI Power Boost' (creative enhancement).",
+    "market_conditions": "Modern resumes should use action verbs, quantify achievements, and be concise. Avoid personal pronouns.",
+    "constraints": [
+      "If no address is provided, use 'Based in the United States'.",
+      "If a location is mentioned, use it for all roles.",
+      "Do NOT invent specific company names or dates unless provided.",
+      "In 'No Hallucinations' mode, only enhance what is given. Do not add new skills/tools.",
+      "In 'AI Power Boost' mode, infer industry-standard tools, skills, and quantifiable achievements based on the job title.",
+      "Use a professional, confident tone. Keep bullet points concise (1-2 lines)."
+    ]
+  },
+  "response_style": {
+    "tone": "Professional and Confident",
+    "format": "Plain text with clear section headers. Use markdown-style headers (###) for sections.",
+    "language_rules": [
+      "Use power words like 'Spearheaded', 'Optimized', 'Increased', 'Managed'.",
+      "Quantify achievements with percentages or numbers whenever possible.",
+      "No filler words or buzzwords. Be direct and impactful."
+    ],
+    "voice_consistency": "Maintain third-person voice throughout."
+  },
+  "control_parameters": {
+    "length": "Medium",
+    "depth": "Tactical",
+    "certainty_level": "Confident tone with strong reasoning.",
+    "citation_mode": "No"
+  },
+  "input_examples": [
+    "User Input: 'I was a secretary. I answered phones and took messages.' Mode: No Hallucinations.",
+    "User Input: 'Business Analyst'. Mode: AI Power Boost."
+  ],
+  "output_expectations": {
+    "structure": [
+      "Contact Information",
+      "Profile/Summary",
+      "Work Experience (with bullet points)",
+      "Skills",
+      "Education",
+      "Hobbies (Optional)"
+    ],
+    "quality_checklist": [
+      "Is the information accurate and aligned with the user's input?",
+      "Is the tone professional and persuasive?",
+      "Does it meet the objective of being a 10/10 resume?",
+      "Are the bullet points concise and impactful?"
+    ]
+  }
+}
+How to Implement the Prompt:
+For No-Code Tools (Glide/Adalo/Bubble): Store this JSON as a variable or in a database record. When the user clicks "Generate," pass the user's input text, selected mode, and the full JSON profile to the AI service.
+For Supabase Functions (Advanced): Create a serverless function that receives the user's data, constructs the full prompt, calls the Qwen API, and returns the result.
+6. Integrating Qwen via Alibaba Cloud API
+Step 1: Get Qwen API Access
+Sign up for an Alibaba Cloud account.
+Navigate to the Model Studio and find the Qwen model (e.g., qwen-max or qwen-plus).
+Obtain your API Key and Endpoint URL.
+Step 2: Call the API from Your App
+The no-code tool will need to make an HTTP POST request to the Qwen endpoint. Here’s the basic structure:
+
+http
+
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+POST https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation-generation/text-generation/invoke
+Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json
+
+{
+  "model": "qwen-max",
+  "input": {
+    "prompt": "Your full JSON Context Profile + User Input Text"
+  },
+  "parameters": {
+    "max_tokens": 2048,
+    "temperature": 0.7
+  }
+}
+Important: The prompt field should contain the entire JSON context profile string, followed by the user's raw resume text. You might need to concatenate them.
+Error Handling: Ensure your app handles API errors gracefully (e.g., rate limits, invalid keys).
+7. Financial Transaction System
+Option 1: Stripe Integration (Recommended)
+Sign up for a Stripe account.
+In your no-code tool, use its built-in Stripe integration to create:
+A Product for the monthly Pro subscription ($8.99).
+A Product for the one-time boost ($14.99).
+Link these products to your Supabase users table. When a payment succeeds, update the subscription_tier and reset resume_count.
+Option 2: Google Sheets Logging (Simpler)
+Create a Google Sheet with columns: User ID, Email, Amount, Type (Subscription/One-Time), Status, Date.
+Use Zapier or Make.com to connect your no-code app's payment events to this sheet.
+Manually reconcile payments with Supabase user data.
+8. Generating and Downloading Files
+Step 1: Convert Text to PDF/DOCX
+For No-Code Tools: Most platforms have built-in actions to generate PDFs from text or HTML. Use the enhanced text output from Qwen.
+For Supabase: You can use a serverless function with a library like pdf-lib or docx to convert the text into a file and save it to Supabase Storage.
+Step 2: Provide Download Links
+After generating the file, store its path in the resumes table (file_path_pdf, file_path_docx).
+In your frontend, when the user clicks "Download," construct a URL like https://[your-supabase-project].supabase.co/storage/v1/object/public/resumes/[file_path] and initiate the download.
+9. Final Checklist for Launch
+✅ Frontend: All screens (Home, Tailor, Upgrade, History) are designed and linked.
+✅ Backend: Supabase project is created with users, resumes, and payments tables.
+✅ Auth: User sign-up/login is working.
+✅ AI: Qwen API is configured and tested with the JSON Context Profile.
+✅ Files: Supabase Storage is set up to save and serve PDF/DOCX files.
+✅ Payments: Stripe integration is live for Pro subscriptions and one-time boosts.
+✅ Logic: The app correctly tracks free resume usage and blocks generation after 3 tries.
+✅ Templates: Three distinct resume designs are available for selection.
+✅ Mode Switching: The "No Hallucinations" and "AI Power Boost" modes are implemented.
+
