@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ViewState, ResumeData, OptimizationMode } from '../types';
 import { Icons } from '../components/Icons';
 import { generateTemplatePDF } from '../services/templatePdfService';
+import { generateDocxResume } from '../services/docxProcessor';
 import { ResumeTemplate } from '../types';
 
 interface HistoryProps {
@@ -14,6 +15,7 @@ interface HistoryProps {
 
 export const History: React.FC<HistoryProps> = ({ setView, resumes, isPro, onPreviewResume, onEditResume }) => {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [downloadingDocxId, setDownloadingDocxId] = useState<string | null>(null);
 
   const handlePreview = (resume: ResumeData) => {
     if (onPreviewResume) {
@@ -38,6 +40,20 @@ export const History: React.FC<HistoryProps> = ({ setView, resumes, isPro, onPre
       alert('Failed to generate PDF. Please try again.');
     } finally {
       setDownloadingId(null);
+    }
+  };
+
+  const handleDownloadDocx = async (resume: ResumeData) => {
+    setDownloadingDocxId(resume.id || null);
+    try {
+      const template = (resume.template_selected as ResumeTemplate) || ResumeTemplate.MODERN;
+      const jobTitle = resume.job_title || 'resume';
+      await generateDocxResume(template, resume.enhanced_content, jobTitle);
+    } catch (error) {
+      console.error('Error generating DOCX:', error);
+      alert('Failed to generate DOCX. Please try again.');
+    } finally {
+      setDownloadingDocxId(null);
     }
   };
 
@@ -116,25 +132,47 @@ export const History: React.FC<HistoryProps> = ({ setView, resumes, isPro, onPre
                 )}
               </div>
               
-              <div className="flex space-x-3">
+              <div className="flex space-x-2">
                 <button 
                   onClick={() => handlePreview(resume)}
-                  className="flex-1 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-800 dark:text-blue-200 py-2.5 rounded-xl text-sm font-bold transition-colors"
+                  className="flex-1 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-800 dark:text-blue-200 py-2.5 rounded-xl text-xs font-bold transition-colors"
                 >
                   Preview
                 </button>
                 <button 
+                  onClick={() => handleDownloadDocx(resume)}
+                  disabled={downloadingDocxId === resume.id}
+                  className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 py-2.5 rounded-xl text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  title="Download DOCX"
+                >
+                  {downloadingDocxId === resume.id ? (
+                    <>
+                      <Icons.FileText size={12} className="mr-1 animate-bounce" />
+                      DOCX...
+                    </>
+                  ) : (
+                    <>
+                      <Icons.FileText size={12} className="mr-1" />
+                      DOCX
+                    </>
+                  )}
+                </button>
+                <button 
                   onClick={() => handleDownload(resume)}
                   disabled={downloadingId === resume.id}
-                  className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 py-2.5 rounded-xl text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  title="Download PDF"
                 >
                   {downloadingId === resume.id ? (
                     <>
-                      <Icons.Download size={14} className="mr-1 animate-bounce" />
-                      Downloading...
+                      <Icons.Download size={12} className="mr-1 animate-bounce" />
+                      PDF...
                     </>
                   ) : (
-                    'Download'
+                    <>
+                      <Icons.Download size={12} className="mr-1" />
+                      PDF
+                    </>
                   )}
                 </button>
                 <button 

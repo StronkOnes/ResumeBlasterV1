@@ -2,8 +2,10 @@ import React, { useRef, useState } from 'react';
 import { ViewState, ResumeData } from '../types';
 import { Icons } from '../components/Icons';
 import { Button } from '../components/Button';
+import { TemplateDataEditor } from '../components/TemplateDataEditor';
 import { updateResume } from '../services/resumeService';
 import { generateTemplatePDFFromElement } from '../services/templatePdfService';
+import { generateDocxResume } from '../services/docxProcessor';
 import { ResumeTemplate } from '../types';
 
 interface PreviewProps {
@@ -17,6 +19,9 @@ export const Preview: React.FC<PreviewProps> = ({ setView, content, resumeData, 
   const resumeContentRef = useRef<HTMLDivElement>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string>('');
+  const [showTemplateEditor, setShowTemplateEditor] = useState(false);
+  const [templateData, setTemplateData] = useState<Record<string, any>>({});
+  const [isDownloadingDocx, setIsDownloadingDocx] = useState(false);
 
   const handleSave = async () => {
     if (!resumeData) {
@@ -52,6 +57,27 @@ export const Preview: React.FC<PreviewProps> = ({ setView, content, resumeData, 
     }
   };
 
+  const handleDownloadDocx = async () => {
+    if (!content || !resumeData) return;
+
+    setIsDownloadingDocx(true);
+    try {
+      const template = (resumeData?.template_selected as ResumeTemplate) || ResumeTemplate.MODERN;
+      const jobTitle = resumeData?.job_title || 'resume';
+      
+      await generateDocxResume(template, content, jobTitle);
+      
+      setSaveMessage('DOCX downloaded successfully!');
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (error) {
+      console.error('Error downloading DOCX:', error);
+      setSaveMessage('Failed to download DOCX. Please try again.');
+      setTimeout(() => setSaveMessage(''), 3000);
+    } finally {
+      setIsDownloadingDocx(false);
+    }
+  };
+
   const handleDownloadPdf = async () => {
     if (resumeContentRef.current) {
       const filename = resumeData?.job_title 
@@ -73,10 +99,31 @@ export const Preview: React.FC<PreviewProps> = ({ setView, content, resumeData, 
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">Your Resume</h2>
         </div>
         <div className="flex space-x-3">
-           <Button variant="outline" className="!px-4 !py-2 text-sm rounded-lg" onClick={handleDownloadPdf}>
-              <Icons.Download size={18} className="mr-2" />
+           <Button 
+             variant="outline" 
+             className="!px-3 !py-2 text-xs rounded-lg" 
+             onClick={handleDownloadDocx}
+             isLoading={isDownloadingDocx}
+           >
+              <Icons.FileText size={16} className="mr-1" />
+              DOCX
+           </Button>
+           <Button 
+             variant="outline" 
+             className="!px-3 !py-2 text-xs rounded-lg" 
+             onClick={handleDownloadPdf}
+           >
+              <Icons.Download size={16} className="mr-1" />
               PDF
            </Button>
+           <button
+             onClick={() => setShowTemplateEditor(true)}
+             className="px-3 py-2 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors flex items-center"
+             title="Edit Template Data"
+           >
+             <Icons.PenTool size={16} className="mr-1" />
+             Edit Data
+           </button>
            <Button 
              className="!px-4 !py-2 text-sm rounded-lg" 
              onClick={handleSave}
@@ -108,6 +155,14 @@ export const Preview: React.FC<PreviewProps> = ({ setView, content, resumeData, 
         <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in">
           {saveMessage}
         </div>
+      )}
+
+      {showTemplateEditor && (
+        <TemplateDataEditor
+          resumeContent={content}
+          onDataChange={setTemplateData}
+          onClose={() => setShowTemplateEditor(false)}
+        />
       )}
       
       <div className="p-6 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 md:rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.05)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.2)] transition-colors">
