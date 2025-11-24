@@ -122,7 +122,43 @@ function extractLocation(text: string): string {
 }
 
 /**
+ * Validate template data before processing
+ */
+function validateTemplateData(data: Record<string, any>): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  
+  // Check required fields
+  if (!data.name || data.name.trim() === '') {
+    errors.push('Name is required');
+  }
+  
+  // Warn about missing optional fields
+  if (!data.email) console.warn('Email not found in resume content');
+  if (!data.phone) console.warn('Phone not found in resume content');
+  if (!data.location) console.warn('Location not found in resume content');
+  
+  // Check arrays
+  if (!Array.isArray(data.work_experience)) {
+    errors.push('Work experience must be an array');
+  }
+  if (!Array.isArray(data.education)) {
+    errors.push('Education must be an array');
+  }
+  if (!Array.isArray(data.skills)) {
+    errors.push('Skills must be an array');
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors
+  };
+}
+
+/**
  * Load and process a DOCX template with resume data
+ * 
+ * This function preserves all formatting from the template file.
+ * The template must have tags formatted with the desired styles.
  */
 export async function processDocxTemplate(
   templatePath: string,
@@ -131,6 +167,10 @@ export async function processDocxTemplate(
   try {
     // Fetch the template file
     const response = await fetch(templatePath);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch template: ${response.statusText}`);
+    }
+    
     const arrayBuffer = await response.arrayBuffer();
     
     // Load the template
@@ -139,10 +179,27 @@ export async function processDocxTemplate(
       paragraphLoop: true,
       linebreaks: true,
       nullGetter: () => '', // Return empty string for missing values
+      delimiters: { start: '{{', end: '}}' }, // Explicit delimiters
     });
 
     // Parse resume content into structured data
     const data = parseResumeContent(resumeContent);
+    
+    // Validate data
+    const validation = validateTemplateData(data);
+    if (!validation.valid) {
+      console.error('Template data validation errors:', validation.errors);
+      throw new Error(`Invalid template data: ${validation.errors.join(', ')}`);
+    }
+    
+    console.log('📊 Template data prepared:', {
+      name: data.name,
+      hasEmail: !!data.email,
+      hasPhone: !!data.phone,
+      workItems: data.work_experience.length,
+      educationItems: data.education.length,
+      skillsItems: data.skills.length
+    });
 
     // Render the document with data
     doc.render(data);
@@ -151,12 +208,23 @@ export async function processDocxTemplate(
     const output = doc.getZip().generate({
       type: 'blob',
       mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      compression: 'DEFLATE', // Better compression
     });
 
+    console.log('✅ DOCX template processed successfully');
     return output;
-  } catch (error) {
-    console.error('Error processing DOCX template:', error);
-    throw new Error('Failed to process DOCX template');
+  } catch (error: any) {
+    console.error('❌ Error processing DOCX template:', error);
+    
+    // Provide more detailed error messages
+    if (error.properties && error.properties.errors) {
+      const detailedErrors = error.properties.errors.map((e: any) => 
+        `${e.message} at ${e.part}`
+      ).join(', ');
+      throw new Error(`Template processing failed: ${detailedErrors}`);
+    }
+    
+    throw new Error(`Failed to process DOCX template: ${error.message || 'Unknown error'}`);
   }
 }
 

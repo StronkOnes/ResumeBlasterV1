@@ -3,6 +3,9 @@ import { ViewState, OptimizationMode, ResumeTemplate } from '../types';
 import { Icons } from '../components/Icons';
 import { Button } from '../components/Button';
 import { TemplateSelector } from '../components/TemplateSelector';
+import { MethodSelector, InputMethod } from '../components/MethodSelector';
+import { ResumeWizard } from '../components/ResumeWizard';
+import { DocumentUpload } from '../components/DocumentUpload';
 import { generateResumeContent } from '../services/aiService';
 
 interface EditorProps {
@@ -12,6 +15,7 @@ interface EditorProps {
 }
 
 export const Editor: React.FC<EditorProps> = ({ setView, setGeneratedResume, initialJobMode = false }) => {
+  const [selectedMethod, setSelectedMethod] = useState<InputMethod | null>(null);
   const [jobTitle, setJobTitle] = useState('');
   const [content, setContent] = useState('');
   const [jobDesc, setJobDesc] = useState('');
@@ -19,10 +23,30 @@ export const Editor: React.FC<EditorProps> = ({ setView, setGeneratedResume, ini
   const [selectedTemplate, setSelectedTemplate] = useState<ResumeTemplate>(ResumeTemplate.MODERN);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showOptimization, setShowOptimization] = useState(false);
+
+  const handleMethodSelect = (method: InputMethod) => {
+    setSelectedMethod(method);
+  };
+
+  const handleContentReady = (extractedContent: string) => {
+    setContent(extractedContent);
+    setShowOptimization(true);
+  };
+
+  const handleBackToMethodSelector = () => {
+    setSelectedMethod(null);
+    setContent('');
+    setShowOptimization(false);
+  };
+
+  const handleBackToContentInput = () => {
+    setShowOptimization(false);
+  };
 
   const handleGenerate = async () => {
     if (!content.trim()) {
-      setError("Please enter some resume content or upload a file.");
+      setError("Please enter some resume content.");
       return;
     }
     if (initialJobMode && !jobDesc.trim()) {
@@ -37,6 +61,7 @@ export const Editor: React.FC<EditorProps> = ({ setView, setGeneratedResume, ini
       const result = await generateResumeContent(
         content, 
         mode, 
+        selectedTemplate,
         initialJobMode ? jobDesc : undefined,
         jobTitle
       );
@@ -50,21 +75,71 @@ export const Editor: React.FC<EditorProps> = ({ setView, setGeneratedResume, ini
     }
   };
 
+  // Show method selector if no method is selected
+  if (!selectedMethod) {
+    return <MethodSelector onSelectMethod={handleMethodSelect} />;
+  }
+
+  // Show wizard if wizard method is selected and optimization not shown yet
+  if (selectedMethod === 'wizard' && !showOptimization) {
+    return (
+      <ResumeWizard
+        onComplete={handleContentReady}
+        onBack={handleBackToMethodSelector}
+      />
+    );
+  }
+
+  // Show document upload if upload method is selected and optimization not shown yet
+  if (selectedMethod === 'upload' && !showOptimization) {
+    return (
+      <DocumentUpload
+        onContentExtracted={handleContentReady}
+        onBack={handleBackToMethodSelector}
+      />
+    );
+  }
+
+  // Show optimization options (this is the final step before AI generation)
   return (
     <div className="max-w-lg mx-auto pb-24 pt-6">
       <div className="flex items-center mb-8">
-        <button onClick={() => setView(ViewState.HOME)} className="mr-4 p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-600 dark:text-slate-300">
+        <button 
+          onClick={handleBackToContentInput} 
+          className="mr-4 p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-600 dark:text-slate-300"
+        >
           <Icons.Back size={24} />
         </button>
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-          {initialJobMode ? 'Tailor to Job' : 'Resume Builder'}
+          {initialJobMode ? 'Tailor to Job' : 'Optimize Your Resume'}
         </h2>
       </div>
 
       <div className="space-y-6">
-        {/* Input Section */}
+        {/* Content Preview */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-black/30 border border-slate-100 dark:border-slate-800 space-y-5 transition-colors">
-           <div>
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300">
+              Resume Content
+            </label>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {content.length} characters
+            </span>
+          </div>
+          
+          <div className="relative">
+            <textarea 
+              className="w-full h-56 px-4 py-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-900/10 dark:focus:ring-blue-500/20 focus:border-blue-900 dark:focus:border-blue-500 outline-none transition-all resize-none text-sm text-slate-800 dark:text-slate-200 leading-relaxed placeholder-slate-400"
+              placeholder="Your resume content..."
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Job Title Input */}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-black/30 border border-slate-100 dark:border-slate-800 space-y-5 transition-colors">
+          <div>
             <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 ml-1">
               Desired Job Title <span className="text-slate-400 font-normal">(Optional)</span>
             </label>
@@ -75,41 +150,6 @@ export const Editor: React.FC<EditorProps> = ({ setView, setGeneratedResume, ini
               value={jobTitle}
               onChange={(e) => setJobTitle(e.target.value)}
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 ml-1">
-              Resume Content
-            </label>
-            <div className="relative">
-              <textarea 
-                className="w-full h-56 px-4 py-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-900/10 dark:focus:ring-blue-500/20 focus:border-blue-900 dark:focus:border-blue-500 outline-none transition-all resize-none text-sm text-slate-800 dark:text-slate-200 leading-relaxed placeholder-slate-400"
-                placeholder="Paste your current resume text here, or type your work history..."
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-              />
-              {content.length === 0 && (
-                 <div className="absolute top-4 right-4">
-                    <label className="flex items-center space-x-2 text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors border border-blue-100 dark:border-blue-800 shadow-sm">
-                      <Icons.Upload size={14} />
-                      <span>Upload File</span>
-                      <input 
-                        type="file" 
-                        className="hidden" 
-                        accept=".txt,.md"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (ev) => setContent(ev.target?.result as string);
-                            reader.readAsText(file);
-                          }
-                        }}
-                      />
-                    </label>
-                 </div>
-              )}
-            </div>
           </div>
 
           {initialJobMode && (
