@@ -34,8 +34,22 @@ serve(async (req) => {
     const pdf = await getDocumentProxy(pdfBytes)
     const result = await extractText(pdf)
 
-    // Ensure we return text, even if empty
-    const extractedText = result.text || ''
+    // The result might have different properties depending on the library version
+    // Check all possible text properties
+    let extractedText = '';
+    if (typeof result === 'string') {
+      extractedText = result;
+    } else if (result && typeof result.text === 'string') {
+      extractedText = result.text;
+    } else if (result && typeof result.content === 'string') {
+      extractedText = result.content;
+    } else if (result && Array.isArray(result.items) && result.items.length > 0) {
+      // For text content items
+      extractedText = result.items.map((item: any) => item.str || '').join(' ');
+    } else {
+      // If all else fails, try to get whatever text might be available
+      extractedText = JSON.stringify(result) || '';
+    }
     
     return new Response(
       JSON.stringify({ text: extractedText }),
