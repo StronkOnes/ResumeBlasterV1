@@ -1,7 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-
-// Using pdfjs-dist in the Deno environment for more reliable PDF parsing
-import { getDocument } from 'https://unpkg.com/pdfjs-dist@4.0.379/legacy/build/pdf.js';
+import { getDocumentProxy, extractText } from 'https://esm.sh/unpdf@^0.11.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,36 +13,17 @@ serve(async (req) => {
 
   try {
     const { fileContent } = await req.json()
+    const buffer = Uint8Array.from(atob(fileContent), c => c.charCodeAt(0))
+    const pdf = await getDocumentProxy(buffer)
+    const { text } = await extractText(pdf)
 
-    // Decode base64 content
-    const binaryString = atob(fileContent);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-
-    // Use pdfjs-dist to load the PDF
-    const pdf = await getDocument({ data: bytes }).promise;
-
-    let fullText = '';
-
-    // Extract text from each page
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const textContent = await page.getTextContent();
-
-      const pageText = textContent.items
-        .map((item: any) => item.str || '')
-        .join(' ');
-
-      fullText += pageText + ' ';
-    }
-
+    // Ensure we return text, even if it's empty
     return new Response(
-      JSON.stringify({ text: fullText.trim() }),
+      JSON.stringify({ text: text || '' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   } catch (error) {
+    console.error('PDF parsing error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
