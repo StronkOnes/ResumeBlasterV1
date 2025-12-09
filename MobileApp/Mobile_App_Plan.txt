@@ -1,0 +1,265 @@
+Copilot said: Great — converting to React Native with
+Great — converting to React Native with Expo is a good choice if you want a single-codebase native app and still keep reuse of your TypeScript logic. Below is a complete, beginner-friendly action plan that walks you through the migration from your current React (web + Vite) project into a React Native / Expo mobile app while keeping the web app fully functional.
+
+I’ll cover:
+
+recommended architecture and approach
+environment and tools to install
+exact commands to run
+how to structure a shared codebase so web + mobile share logic
+migrating UI components and styling guidance
+file generation & download (DOCX/PDF) strategies (server vs client)
+Supabase & auth in mobile
+exact package lists and important polyfills
+code examples (Expo App entry + shared service + mobile file helper + server endpoint)
+testing, debugging, publishing checklist
+timeline, common pitfalls, and checklist for each PR
+If you want me to produce a ready-to-apply patch/PR, tell me and I’ll generate the file diffs.
+
+Top-level recommended architecture (summary)
+
+Keep your web app in the repository root (leave App.tsx, index.tsx, vite build).
+Create a new folder mobile/ containing a new Expo-managed app (TypeScript).
+Create a shared/ (or src/shared/) directory for pure TypeScript logic: resume generation orchestration, template parsing, Supabase calls (only client-safe calls), validation, types. The web and mobile projects import from shared/.
+Keep UI components separate: web components stay in components/, mobile components go in mobile/src/components/. Reuse pure logic via shared/.
+DOCX/PDF generation: prefer server-side generation (recommended) — keep heavy file generation on the backend (Edge Function / Node microservice / Supabase function). Mobile will call the server to get a downloadable file, then write it to disk using expo-file-system and open with expo-sharing. This avoids DOM and browser-only libraries.
+Use Expo managed workflow for easiest on-boarding and builds (EAS for production if native modules required).
+Why server-side DOCX/PDF is recommended
+
+The web app likely uses DOM/Blob-based/browser-only libraries or client-side docx libraries that rely on browser APIs. React Native does not have a DOM, and file-handling libraries differ.
+Offloading to server ensures identical output for web and mobile and avoids heavy native dependency issues on mobile.
+Server can use the same logic you already have (move the file-creation logic to a Cloud Function or Node microservice).
+Environment & tools to install (beginner-friendly)
+Node.js LTS (>= 18)
+npm (or yarn)
+Git
+Expo CLI (optional): use npx create-expo-app (no global install required)
+Android Studio (for Android emulator) and Xcode (only if you will build for iOS on macOS)
+(Optional for production) EAS CLI (expo's cloud build) if you need native modules or AAB builds: npm install -g eas-cli
+Create the Expo app and project layout (commands) From your repo root:
+Create a new Expo app in a new folder mobile:
+npx create-expo-app@latest mobile --template expo-template-blank-typescript
+OR, if you prefer yarn: yarn create expo-app mobile --template expo-template-blank-typescript
+Move-only shared logic directory:
+Create a folder shared/ (or src/shared/) at repository root and move pure TypeScript modules (resume generation orchestration, template parsers, SQL schema helpers, type definitions) into that folder. The web import path will change to import from '../shared' or similar.
+Install dependencies in the root web app as before (no change).
+
+Install mobile deps in mobile/ (I'll list them below).
+
+Packages to install in the Expo (mobile) project Run these inside mobile/:
+expo packages:
+expo install expo-file-system expo-sharing expo-linking expo-constants
+expo install react-native-gesture-handler react-native-safe-area-context react-native-screens @react-navigation/native @react-navigation/native-stack
+libraries:
+npm install axios
+npm install @supabase/supabase-js
+npm install react-native-url-polyfill (for supabase in RN)
+npm install react-native-get-random-values
+For document picking (optional): expo install expo-document-picker
+optional native helper / if using EAS or bare workflow:
+react-native-blob-util (not in managed without EAS/build)
+Notes:
+
+With Expo managed workflow, prefer expo-file-system + expo-sharing for downloads & opening files.
+Some heavily native libraries (react-native-fs, react-native-share, react-native-blob-util) require custom native builds or EAS — avoid unless necessary.
+For Supabase, you often need polyfills for URL and crypto depending on supabase-js version; react-native-url-polyfill/auto and react-native-get-random-values are common.
+Polyfills & entry setup (important for Supabase) In mobile/App.tsx (entry), add polyfills before you import supabase or other libs:
+install polyfills:
+npm install react-native-url-polyfill react-native-get-random-values
+Then in mobile/src/setupPolyfills.ts:
+
+
+mobile/src/setupPolyfills.ts
+v1
+// Must be imported before any library that uses URL or crypto
+import 'react-native-get-random-values';
+import 'react-native-url-polyfill/auto';
+
+Import this as the first import in App.tsx.
+
+Shared service structure Create shared/services/ that contains pure TypeScript logic only (no DOM or window). Example files:
+shared/types.ts
+shared/resumeService.ts (subject matter logic - template parsing, structure for request payload)
+shared/supabaseClient.ts (thin client wrappers that only use safe public keys / call server endpoints)
+I’ll propose a starter shared file example below.
+
+DOCX/PDF generation approaches (two choices) A) Server-side generation (recommended)
+Move DOCX/PDF generation code (that uses docx, puppeteer, or browser-only stuff) into a serverless function (Supabase Edge Function, Vercel serverless, or simple Node/Express server).
+Web app calls this endpoint to get a URL or binary. The web can either download via anchor or open it. The mobile app will download via expo-file-system and open with expo-sharing.
+B) Client-side generation on Mobile
+
+More complex: rewrite generation logic to use native-compatible libraries; often impossible without lots of native modules. Not recommended unless file generation is extremely simple.
+I will show an example Node Express endpoint that receives a JSON payload and returns a DOCX file.
+
+Implementation details and code examples
+A) Example Expo entry (mobile/App.tsx)
+
+
+mobile/App.tsx
+v1
+import './src/setupPolyfills';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import HomeScreen from './src/screens/HomeScreen';
+
+B) Example mobile screen that requests generated file and saves it
+
+
+mobile/src/screens/HomeScreen.tsx
+v1
+import React, { useState } from 'react';
+import { View, Text, Button, ActivityIndicator, Alert } from 'react-native';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import axios from 'axios';
+import { buildPayloadForResume } from '../../shared/resumeService';
+C) Shared resume service (pure TypeScript) — a simple example
+
+
+shared/resumeService.ts
+v1
+// Pure logic: Build the payload your server expects. No DOM or window.
+export type ResumeInput = {
+  fullName: string;
+  email: string;
+  sections: Array<{ title: string; items: string[] }>;
+};
+D) Example Node/Express server endpoint (server/generate-docx.ts)
+
+This is a minimal server example. You can deploy as a Supabase Edge Function, Vercel serverless function, or an Express app.
+
+server/generate-docx.ts
+v1
+import express from 'express';
+import bodyParser from 'body-parser';
+import { Document, Packer, Paragraph, TextRun } from 'docx';
+
+const app = express();
+app.use(bodyParser.json({ limit: '2mb' }));
+E) Example of mobile file helper using expo-file-system (extracted)
+
+
+mobile/src/utils/fileHelpers.ts
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+
+export async function saveAndShareBase64(base64Data: string, filename: string) {
+  const fileUri = FileSystem.cacheDirectory + filename;
+  await FileSystem.writeAsStringAsync(fileUri, base64Data, { encoding: FileSystem.EncodingType.Base64 });
+Auth & Supabase in Expo
+Use @supabase/supabase-js in the mobile app. Add polyfills (react-native-url-polyfill/auto) at app start.
+For OAuth / redirects: configure deep linking in Expo and your Supabase project. Expo Linking docs: configure a redirect URI like exp://... or use a custom scheme and add that scheme to Supabase OAuth settings. For Magic Link: the email link will open a browser and then redirect back; to handle, you need deep linking or use the Supabase-native auth flows via the RESTful API – this is a common tricky part. Consider using email+password or a server-based auth token approach if OAuth becomes tricky.
+Styling & component migration tips
+Web CSS (classNames, CSS files) does NOT work in React Native. Convert styles to StyleSheet objects.
+Replace HTML elements:
+div -> View
+span/p -> Text (Text must wrap all inline text)
+img -> Image
+form -> use View + state handlers (RN has no native form element)
+Inputs: HTML input -> TextInput (RN)
+No CSS grid/flex differences: RN uses flexbox by default. Convert CSS rules to RN styles.
+Avoid inline HTML attributes (onClick -> onPress).
+Consider using react-native-paper or UI libraries for consistent native look.
+For icons, switch to react-native-vector-icons or @expo/vector-icons.
+Sharing code between web and mobile
+Keep business logic in shared/ — both apps import it.
+For reusable React UI, you can use react-native-web and keep some components compatible between web and native, but that may require rewriting styles to StyleSheet and using RN components. For now, duplicate UI components as necessary (web components remain in web, mobile components in mobile).
+If you want a single codebase for UI, consider using react-native-web and a monorepo setup, but that is more advanced.
+Debugging & running on emulator
+In mobile/ run:
+npm start (Expo CLI will open Metro bundler)
+Press 'a' to run Android emulator or scan QR with Expo Go on physical device.
+Use console.log and React Native debug tools. To inspect network requests, use Flipper or your server logs.
+Building for release
+For production builds with native modules, use EAS Build (expo.io/eas).
+Configure app.json/app.config.js with bundle identifiers and expo credentials.
+Generate Android App Bundle (AAB) and iOS IPA via EAS or native builds for store publishing.
+Timeline estimates (rough, beginner pace)
+Setup environment & create Expo project: 0.5–1 day
+Move/refactor shared logic into shared/: 1–3 days
+Implement server endpoint for DOCX generation: 1–2 days
+Mobile screens + file download/open flows: 2–4 days
+Supabase auth adjustments + deep linking: 1–3 days (can be fiddly)
+Polishing, testing, and store readiness: 3–7 days Total: ~8–20 days depending on experience and edge cases.
+Practical migration plan / PR strategy (step-by-step)
+PR 1: Create mobile/ Expo app skeleton + setupPolyfills + README. (small)
+PR 2: Create shared/ with minimal types & one helper function (buildPayloadForResume) and update web imports to use shared/. (small)
+PR 3: Implement server endpoint to generate DOCX & sample integration (deployed to a staging URL). (medium)
+PR 4: Implement mobile screen to call server endpoint, write file, share/open. (medium)
+PR 5: Migrate additional features (upload, preview, save) and auth flows. (larger)
+PR 6: Final polish, CI updates, and publishing steps.
+Security and best practices
+Do NOT embed service-role or admin keys in mobile app. Use server endpoints for privileged operations.
+Keep supabase anon key in environment variables (Expo Constants). For secrets, use server.
+Use HTTPS for all backend endpoints.
+Explain to users why permissions are requested (storage) — you must ask for minimal permissions.
+Common pitfalls & troubleshooting
+Binary downloads corrupted: ensure you use base64 encode on server response and write base64 in Expo FileSystem. Avoid naive string conversions.
+Supabase in RN failing: ensure polyfills are loaded before supabase client is created.
+OAuth redirect loops: carefully set redirect URIs and deep linking schemes.
+Native modules not working in Expo: you may need EAS to build with custom native modules.
+Testing checklist before release
+ Login & logout flows work on mobile.
+ Generate resume: server returns file -> mobile writes -> open via share.
+ Uploads & document picks work (test docx/pdf).
+ Offline error handling: graceful error messages.
+ Permissions prompts are clear and necessary.
+ App icons + splash screen configured.
+ Privacy policy & store listing ready.
+Example file proposals (so you can copy/paste) Below are the files I mentioned earlier. Put them where indicated.
+
+mobile/App.tsx
+v2
+import './src/setupPolyfills';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import HomeScreen from './src/screens/HomeScreen';
+
+
+mobile/src/setupPolyfills.ts
+v2
+// Must be imported before other libs that require polyfills (like supabase)
+import 'react-native-get-random-values';
+import 'react-native-url-polyfill/auto';
+
+
+mobile/src/screens/HomeScreen.tsx
+v2
+import React, { useState } from 'react';
+import { View, Text, Button, ActivityIndicator, Alert } from 'react-native';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import axios from 'axios';
+import { buildPayloadForResume } from '../../shared/resumeService';
+
+shared/resumeService.ts
+v2
+export type ResumeInput = {
+  fullName: string;
+  email: string;
+  sections: Array<{ title: string; items: string[] }>;
+};
+
+
+server/generate-docx.ts
+v2
+import express from 'express';
+import bodyParser from 'body-parser';
+import { Document, Packer, Paragraph, TextRun } from 'docx';
+
+const app = express();
+app.use(bodyParser.json({ limit: '2mb' }));
+Next immediate steps (do these now)
+Create a branch mobile-expo-migration
+Run npx create-expo-app mobile --template expo-template-blank-typescript
+Create shared/ and move one small pure service (e.g., types.ts and resumeService.ts) into it, update web imports
+Create and test the basic server/generate-docx endpoint on localhost / deploy to staging
+Implement the HomeScreen example in mobile and test generating and opening a docx
+Offer & follow-up If you want, I can:
+generate the exact patch files for the initial PR that creates mobile/ and shared/ and small helper files,
+produce a serverless/Supabase Edge Function version of generate-docx (if you want to keep everything on Supabase),
+produce file-by-file diffs (ready to commit) for the first 3 PRs in the PR strategy above.
+Which of those would you like first? (I recommend: I can create the initial mobile skeleton files + shared/resumeService.ts and a minimal server endpoint in a small patch you can apply.)
+

@@ -14,10 +14,11 @@ Transform your resume into a professional, ATS-optimized masterpiece using cutti
 ## ✨ Features
 
 ### 🤖 AI-Powered Enhancement
-- **Gemini 2.5 Flash Integration** - Leverage Google's latest AI model
+- **Secure Gemini 2.5 Flash Integration** - Leverage Google's latest AI model via secure Supabase Edge Functions
 - **Two Optimization Modes:**
   - 🛡️ **Strict Mode** - Factual improvements only, no hallucinations
   - ⚡ **Power Boost** - AI-enhanced with industry keywords and achievements
+- **API Security** - AI calls processed securely in Supabase Edge Functions to protect your API key
 
 ### 📝 Resume Management
 - **Save & Organize** - All resumes stored securely in Supabase
@@ -78,8 +79,9 @@ Create a `.env.local` file in the root directory:
 ```env
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_GEMINI_API_KEY=your_gemini_api_key
 ```
+
+Note: The Gemini API key is no longer needed in frontend environment variables as AI processing happens securely via Supabase Edge Functions.
 
 ### 4. Set Up Supabase Database
 1. Go to your Supabase project dashboard
@@ -214,9 +216,9 @@ Edit `views/Preview.tsx` to customize the resume layout and styling.
 4. See [Troubleshooting Guide](TROUBLESHOOTING_RESUMES.md)
 
 ### AI Not Working?
-1. Verify `VITE_GEMINI_API_KEY` in `.env.local`
-2. Check API key is valid
-3. Ensure you're using the correct model name
+1. Verify Supabase Edge Function `ai-resume-generation` is deployed and properly configured
+2. Check that your Supabase project has the `GEMINI_API_KEY` environment variable set
+3. Ensure the function is properly configured to call the AI API
 
 ### PDF Download Issues?
 1. Check browser console for errors
@@ -243,7 +245,6 @@ netlify deploy --prod --dir=dist
 Don't forget to set these in your deployment platform:
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
-- `VITE_GEMINI_API_KEY`
 
 ---
 
@@ -279,6 +280,36 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **StronkOnes** - [@StronkOnes](https://github.com/StronkOnes)
 
 Project Link: [https://github.com/StronkOnes/ResumeBlaster](https://github.com/StronkOnes/ResumeBlaster)
+
+---
+
+## 🔐 Security & Deployment
+
+### API Key Security
+This application uses a secure architecture to protect your Gemini API key:
+- **Frontend**: No API keys are exposed to the client-side
+- **Backend**: AI processing happens via Supabase Edge Functions
+- **Configuration**: Gemini API key is stored securely in Supabase project settings
+
+### Deploying to Render
+1. Deploy the frontend application using the provided `render.yaml` configuration
+2. Deploy the Supabase Edge Functions separately using the Supabase CLI
+3. Add your Gemini API key to the Supabase project settings (not in the frontend environment variables)
+
+For detailed deployment instructions, see `DEPLOY_INSTRUCTIONS.txt`.
+
+### Testing the Application
+1. **Local Development:**
+   - Run `npm install` to install dependencies
+   - Create `.env.local` with your Supabase credentials
+   - Run `npm run dev` to start the development server
+   - The application will be available at `http://localhost:3000`
+
+2. **Function Testing:**
+   - Ensure Supabase Edge Functions are properly deployed
+   - Test that the AI resume generation works through the UI
+   - Verify document parsing works for PDF, DOCX, and TXT files
+   - Check that resumes are properly saved to Supabase
 
 ---
 

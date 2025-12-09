@@ -1,0 +1,57 @@
+ 1. Core Features to Add/Enhance
+
+  Upload Functionality:
+   - Implement document upload capability (PDF, DOCX, TXT, MD files)
+   - Add file parsing to extract text content
+   - Create upload UI with drag-and-drop simulation
+   - Add file type validation
+
+  AI Enhancement Features:
+   - Integrate AI resume optimization with Gemini
+   - Implement both "Strict Mode" and "Power Boost" modes
+   - Add job tailoring functionality
+   - Create template selection system
+
+  Admin Dashboard:
+   - Build mobile-friendly admin dashboard
+   - Implement metrics fetching from Supabase
+   - Add admin authentication system
+   - Create responsive stats display
+
+  Visual Enhancements:
+   - Add glassmorphism UI elements
+   - Implement dark/light mode
+   - Create modern, beautiful UI components
+   - Add smooth animations and transitions
+
+  2. Data Structure Alignment
+
+   - Update ResumeData interface to match web app structure
+   - Add job_title, template_selected, enhancement_mode, etc.
+   - Align with the existing Supabase schema used by the web app
+
+  3. Implementation Plan
+
+  Phase 1: Document Upload Feature
+   - Create DocumentUpload component for mobile
+   - Implement file picking using expo-document-picker
+   - Add text extraction functionality
+   - Integrate with existing ResumeForm
+
+  Phase 2: AI Enhancement Integration
+   - Create services for AI integration
+   - Implement both optimization modes
+   - Add job description tailoring
+   - Connect to Gemini API
+
+  Phase 3: Admin Dashboard
+   - Build admin dashboard screens
+   - Create metrics fetching logic
+   - Implement admin authentication
+   - Add responsive layout
+
+  Phase 4: UI/UX Enhancements
+   - Apply glassmorphism design
+   - Add animations and transitions
+   - Improve navigation flow
+   - Implement dark/light mode

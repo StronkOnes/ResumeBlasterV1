@@ -118,8 +118,8 @@ All required dependencies are correctly installed:
 
 ```env
 VITE_SUPABASE_URL=https://kykgfsceydneqipgcejb.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-VITE_GEMINI_API_KEY=AIzaSyBbYDIxk9_Dz5Ke-26tZNjgMrfVBQP2eP0
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+VITE_GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
 **Status:** ✅ All required environment variables configured

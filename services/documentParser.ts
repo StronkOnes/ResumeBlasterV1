@@ -46,20 +46,26 @@ async function parsePdfFile(file: File): Promise<string> {
     const arrayBuffer = await file.arrayBuffer();
     const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
     const pdf = await loadingTask.promise;
-    
+
     let fullText = '';
-    
+
     // Extract text from each page
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
       const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .map((item: any) => item.str)
-        .join(' ');
-      fullText += pageText + '\n';
+
+      // Ensure textContent.items exists and map only valid string items
+      if (textContent && textContent.items && Array.isArray(textContent.items)) {
+        const pageText = textContent.items
+          .filter((item: any) => item && typeof item.str === 'string') // Only process items with valid str property
+          .map((item: any) => item.str)
+          .join(' ');
+        fullText += pageText + ' ';
+      }
     }
-    
-    return fullText.trim();
+
+    // Ensure we return a string, even if empty
+    return fullText ? fullText.trim() : '';
   } catch (error) {
     console.error('Error parsing PDF:', error);
     throw new Error('Failed to parse PDF file. Please ensure the file is not corrupted or password-protected.');

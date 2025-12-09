@@ -59,8 +59,9 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({ onContentExtract
 
     try {
       const content = await parseDocument(file);
-      
-      if (!content || content.trim().length === 0) {
+
+      // Ensure content is a string and has content after trimming
+      if (typeof content !== 'string' || !content || content.trim().length === 0) {
         throw new Error('No text content found in the document. Please ensure the file contains text.');
       }
 

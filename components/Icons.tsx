@@ -1,14 +1,14 @@
 import React from 'react';
-import { 
-  FileText, 
-  Upload, 
-  PenTool, 
-  CheckCircle, 
-  Sparkles, 
-  Zap, 
-  Download, 
-  Clock, 
-  Star, 
+import {
+  FileText,
+  Upload,
+  PenTool,
+  CheckCircle,
+  Sparkles,
+  Zap,
+  Download,
+  Clock,
+  Star,
   User,
   ChevronLeft,
   Briefcase,
@@ -17,7 +17,9 @@ import {
   Sun,
   Moon,
   LogOut,
-  Eye
+  Eye,
+  Trash2,
+  Lock
 } from 'lucide-react';
 
 export const Icons = {
@@ -38,5 +40,7 @@ export const Icons = {
   Sun,
   Moon,
   LogOut,
-  Eye
+  Eye,
+  Trash: Trash2,
+  Lock
 };

@@ -1,0 +1,3 @@
+1. Launch Server (Npm Run Dev)
+2. Launch Supabase Function Cd main app (supabase login) then deploy parser  (supabase functions deploy pdf-parser --project-ref kykgfsceydneqipgcejb)
+3. Deploy frontend (Npm Expo Start --clear)

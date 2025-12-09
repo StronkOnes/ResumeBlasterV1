@@ -28,8 +28,9 @@ Create `.env.local` in the project root:
 ```env
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_GEMINI_API_KEY=your_gemini_api_key
 ```
+
+Note: The Gemini API key is no longer needed in frontend environment variables as AI processing happens securely via Supabase Edge Functions.
 
 ### 3. Set Up Supabase Database
 

@@ -137,15 +137,18 @@ export const Preview: React.FC<PreviewProps> = ({ setView, content, resumeData, 
       <div className="flex-grow px-4 md:px-0 pb-8 pt-6">
         <div ref={resumeContentRef} className="bg-white shadow-2xl shadow-slate-200/60 dark:shadow-black/40 rounded-lg min-h-[800px] p-8 md:p-16 border border-slate-100 dark:border-slate-800 print:shadow-none transition-colors">
             {/* Resume content intentionally kept light/white paper-like for readability and realism */}
-            <div className="prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-700 prose-li:text-slate-700 prose-strong:text-slate-900">
-              {/* Simple markdown rendering */}
+            <div className="max-w-none text-slate-900 dark:text-slate-100">
+              {/* Plain text rendering - no markdown formatting */}
               {content.split('\n').map((line, i) => {
-                if (line.startsWith('###')) return <h3 key={i} className="text-lg uppercase tracking-wide border-b-2 border-slate-100 pb-2 mt-8 mb-4 text-slate-900">{line.replace('###', '')}</h3>;
-                if (line.startsWith('##')) return <h2 key={i} className="text-2xl font-bold mt-8 mb-3 text-slate-900">{line.replace('##', '')}</h2>;
-                if (line.startsWith('#')) return <h1 key={i} className="text-4xl font-extrabold text-center mb-10 text-slate-900 tracking-tight">{line.replace('#', '')}</h1>;
-                if (line.startsWith('-')) return <li key={i} className="ml-4 list-disc mb-2 pl-1 marker:text-slate-400">{line.replace('-', '')}</li>;
-                if (line.trim() === '') return <div key={i} className="h-2"></div>;
-                return <p key={i} className="mb-3 leading-relaxed">{line}</p>;
+                // Remove any markdown formatting characters but preserve the text
+                const cleanLine = line
+                  .replace(/^#+\s*/, '')      // Remove #, ##, ### headers
+                  .replace(/^-/, '')          // Remove list markers
+                  .replace(/^\s*[-*]\s*/, '') // Remove other list markers
+                  .trim();
+
+                if (cleanLine === '') return <div key={i} className="h-2 block"></div>;
+                return <p key={i} className="mb-3 leading-relaxed text-black dark:text-white">{cleanLine}</p>;
               })}
             </div>
         </div>

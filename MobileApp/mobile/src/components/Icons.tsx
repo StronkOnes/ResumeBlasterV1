@@ -1,0 +1,46 @@
+import React from 'react';
+import {
+  FileText,
+  Upload,
+  PenTool,
+  CheckCircle,
+  Sparkles,
+  Zap,
+  Download,
+  Clock,
+  Star,
+  User,
+  ChevronLeft,
+  Briefcase,
+  ShieldCheck,
+  Crown,
+  Sun,
+  Moon,
+  LogOut,
+  Eye,
+  Trash2,
+  Lock
+} from 'lucide-react-native';
+
+export const Icons = {
+  FileText,
+  Upload,
+  PenTool,
+  CheckCircle,
+  Sparkles,
+  Zap,
+  Download,
+  Clock,
+  Star,
+  User,
+  Back: ChevronLeft,
+  Briefcase,
+  Shield: ShieldCheck,
+  Crown,
+  Sun,
+  Moon,
+  LogOut,
+  Eye,
+  Trash: Trash2,
+  Lock
+};

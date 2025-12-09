@@ -6,7 +6,8 @@ export enum ViewState {
   UPGRADE = 'UPGRADE',
   TAILOR = 'TAILOR',
   AUTH = 'AUTH',
-  EDIT = 'EDIT'
+  EDIT = 'EDIT',
+  ADMIN = 'ADMIN'
 }
 
 export enum OptimizationMode {

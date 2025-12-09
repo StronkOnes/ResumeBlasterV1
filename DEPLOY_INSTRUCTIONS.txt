@@ -1,0 +1,64 @@
+Here are the commands you need to run in your own terminal (PowerShell or Command Prompt) to deploy the Supabase Edge Functions for the Resume Blaster web application.
+
+## 🔐 Setting up API Keys in Supabase
+
+**Step 0: Configure Environment Variables in Supabase**
+
+Before deploying the functions, you need to add your Gemini API key to your Supabase project settings:
+
+1. Go to your Supabase Dashboard
+2. Navigate to your project
+3. Go to **Settings** → **Environment variables**
+4. Add the following variable:
+   - `GEMINI_API_KEY=your_actual_gemini_api_key_here`
+
+This ensures your API key is securely stored and accessible only to your serverless functions.
+
+## 🚀 Deploying Supabase Edge Functions
+
+**Step 1: Log in to the Supabase CLI**
+
+First, you need to log in to your Supabase account. Run the following command:
+
+```
+supabase login
+```
+
+This will open a browser window and ask you to authorize the CLI. Follow the instructions to generate a new Personal Access Token, and then paste it into the terminal when prompted.
+
+**Step 2: Navigate to the Project Directory**
+
+Navigate to the root directory of your Resume Blaster project:
+
+```
+cd C:\Users\hp\Downloads\Projects - Client\Resume Blaster\resume-blaster
+```
+
+**Step 3: Deploy the AI Resume Generation Function**
+
+Deploy the `ai-resume-generation` function:
+
+```
+supabase functions deploy ai-resume-generation --project-ref your-supabase-project-ref
+```
+
+**Step 4: Deploy the PDF Parser Function**
+
+Deploy the existing `pdf-parser` function:
+
+```
+supabase functions deploy pdf-parser --project-ref your-supabase-project-ref
+```
+
+## 🌐 Deploying Frontend to Render
+
+1. Create a new Web Service on Render
+2. Connect your repository (or upload the code)
+3. Use the provided `render.yaml` configuration
+4. Set the environment variables in Render dashboard:
+   - `VITE_SUPABASE_URL`: Your Supabase project URL
+   - `VITE_SUPABASE_ANON_KEY`: Your Supabase anon key
+
+Note: Do NOT set `VITE_GEMINI_API_KEY` on Render - the API key is securely stored in Supabase Edge Functions.
+
+After deployment, your application will be able to call the AI processing securely through Supabase Edge Functions.

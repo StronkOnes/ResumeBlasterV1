@@ -62,100 +62,33 @@ export const generateTemplatePDF = async (
   container.style.color = style.primaryColor;
   container.style.lineHeight = style.lineHeight.toString();
   
-  // Parse markdown content and apply template-specific styling
+  // Parse content as plain text - no markdown formatting
   const lines = content.split('\n');
-  let inList = false;
-  
+
   lines.forEach(line => {
     let element: HTMLElement;
-    
-    if (line.startsWith('###')) {
-      // Section headers
-      element = document.createElement('h3');
-      element.textContent = line.replace('###', '').trim();
-      element.style.fontSize = `${style.sectionSize}px`;
-      element.style.fontWeight = 'bold';
-      element.style.color = style.primaryColor;
-      element.style.marginTop = `${style.sectionSpacing}px`;
-      element.style.marginBottom = '12px';
-      element.style.textTransform = template === ResumeTemplate.EXECUTIVE ? 'uppercase' : 'none';
-      element.style.borderBottom = template === ResumeTemplate.CLASSIC 
-        ? `${style.accentWidth}px solid ${style.secondaryColor}` 
-        : 'none';
-      element.style.paddingBottom = '8px';
-      
-      // Add accent bar for Modern template
-      if (template === ResumeTemplate.MODERN) {
-        const accent = document.createElement('div');
-        accent.style.width = '40px';
-        accent.style.height = `${style.accentWidth}px`;
-        accent.style.backgroundColor = style.primaryColor;
-        accent.style.marginTop = '4px';
-        element.appendChild(accent);
-      }
-      
-      inList = false;
-    } else if (line.startsWith('##')) {
-      // Subsection headers
-      element = document.createElement('h2');
-      element.textContent = line.replace('##', '').trim();
-      element.style.fontSize = `${style.sectionSize + 2}px`;
-      element.style.fontWeight = 'bold';
-      element.style.color = style.primaryColor;
-      element.style.marginTop = `${style.sectionSpacing + 4}px`;
-      element.style.marginBottom = '10px';
-      inList = false;
-    } else if (line.startsWith('#')) {
-      // Main header (name)
-      element = document.createElement('h1');
-      element.textContent = line.replace('#', '').trim();
-      element.style.fontSize = `${style.headerSize}px`;
-      element.style.fontWeight = 'bold';
-      element.style.color = style.primaryColor;
-      element.style.textAlign = 'center';
-      element.style.marginBottom = '30px';
-      element.style.letterSpacing = template === ResumeTemplate.EXECUTIVE ? '2px' : '0';
-      inList = false;
-    } else if (line.startsWith('-')) {
-      // List items
-      if (!inList) {
-        const ul = document.createElement('ul');
-        ul.style.marginLeft = '20px';
-        ul.style.marginBottom = '12px';
-        container.appendChild(ul);
-        inList = true;
-      }
-      
-      element = document.createElement('li');
-      element.textContent = line.replace('-', '').trim();
-      element.style.marginBottom = '6px';
-      element.style.fontSize = `${style.bodySize}px`;
-      element.style.color = style.secondaryColor;
-      element.style.listStyleType = template === ResumeTemplate.MODERN ? 'disc' : 'square';
-      
-      // Add to the last ul element
-      const lastUl = container.lastElementChild as HTMLElement;
-      if (lastUl && lastUl.tagName === 'UL') {
-        lastUl.appendChild(element);
-        return;
-      }
-    } else if (line.trim() === '') {
+
+    // Remove any markdown formatting characters but preserve the text
+    const cleanLine = line
+      .replace(/^#+\s*/, '')      // Remove #, ##, ### headers
+      .replace(/^-/, '')          // Remove list markers
+      .replace(/^\s*[-*]\s*/, '') // Remove other list markers
+      .trim();
+
+    if (cleanLine === '') {
       element = document.createElement('div');
       element.style.height = '8px';
-      inList = false;
     } else {
-      // Regular paragraphs
+      // All content as paragraphs with consistent styling
       element = document.createElement('p');
-      element.textContent = line;
+      element.textContent = cleanLine;
       element.style.marginBottom = '10px';
       element.style.fontSize = `${style.bodySize}px`;
-      element.style.color = style.secondaryColor;
-      inList = false;
+      element.style.color = style.primaryColor; // Use primary color for consistent black text
+      element.style.fontFamily = style.fontFamily;
     }
-    
-    if (element && element.tagName !== 'LI') {
-      container.appendChild(element);
-    }
+
+    container.appendChild(element);
   });
   
   document.body.appendChild(container);

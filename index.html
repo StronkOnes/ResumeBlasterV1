@@ -8,12 +8,22 @@
     <link rel="apple-touch-icon" href="/Favicon.png" />
     <meta name="description" content="Create professional, ATS-optimized resumes with AI-powered Resume Blaster" />
     <meta name="theme-color" content="#2563eb" />
+    <script>
+      tailwind = {
+        config: {
+          darkMode: 'class',
+          plugins: []
+        }
+      }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
       body {
         font-family: 'Inter', sans-serif;
         background-color: #F8FAFC;
+        color: #0f172a; /* slate-900 */
+        transition: background-color 0.3s, color 0.3s;
       }
       /* Custom Scrollbar */
       ::-webkit-scrollbar {
@@ -29,6 +39,168 @@
       ::-webkit-scrollbar-thumb:hover {
         background: #94a3b8;
       }
+
+      /* Direct dark mode CSS - overrides Tailwind if needed */
+      .dark body {
+        background-color: #0f172a !important; /* slate-900 */
+        color: #f1f5f9 !important; /* slate-100 */
+      }
+
+      .dark {
+        background-color: #0f172a !important;
+        color: #f1f5f9 !important;
+      }
+
+      /* Comprehensive dark mode styling for all UI elements */
+      .dark {
+        background-color: #0f172a !important; /* slate-900 */
+        color: #e2e8f0 !important; /* slate-200 */
+      }
+
+      /* Background elements */
+      .dark .bg-slate-50 { background-color: #1e293b !important; } /* slate-800 */
+      .dark .bg-white { background-color: #1e293b !important; } /* slate-800 */
+      .dark .bg-slate-950 { background-color: #0f172a !important; } /* slate-900 */
+      .dark .bg-slate-900 { background-color: #1e293b !important; } /* slate-800 */
+      .dark .bg-blue-50 { background-color: #1e293b !important; } /* slate-800 */
+
+      /* Text elements */
+      .dark .text-slate-900 { color: #f8fafc !important; } /* slate-50 */
+      .dark .text-slate-700 { color: #cbd5e1 !important; } /* slate-300 */
+      .dark .text-slate-500 { color: #94a3b8 !important; } /* slate-400 */
+      .dark .text-slate-400 { color: #94a3b8 !important; } /* slate-400 */
+      .dark .text-slate-300 { color: #cbd5e1 !important; } /* slate-300 */
+      .dark .text-white { color: #e2e8f0 !important; } /* slate-200 */
+
+      /* Border elements */
+      .dark .border-slate-200 { border-color: #475569 !important; } /* slate-600 */
+      .dark .border-slate-100 { border-color: #334155 !important; } /* slate-700 */
+      .dark .border-white { border-color: #475569 !important; } /* slate-600 */
+
+      /* Buttons */
+      .dark button, .dark .bg-blue-50, .dark .bg-slate-100 {
+        background-color: #334155 !important; /* slate-700 */
+        color: #f1f5f9 !important; /* slate-100 */
+        border-color: #475569 !important; /* slate-600 */
+      }
+
+      .dark .hover\:bg-slate-200:hover { background-color: #475569 !important; } /* slate-600 */
+      .dark .hover\:bg-slate-50:hover { background-color: #334155 !important; } /* slate-700 */
+
+      /* Button specific styling */
+      .dark .bg-gradient-to-r.from-purple-500.to-blue-500 {
+        background: linear-gradient(to right, #7e22ce, #3b82f6) !important;
+      }
+
+      /* Input elements */
+      .dark input, .dark textarea {
+        background-color: #1e293b !important; /* slate-800 */
+        color: #e2e8f0 !important; /* slate-200 */
+        border-color: #475569 !important; /* slate-600 */
+      }
+
+      .dark .bg-slate-50.dark\:bg-slate-950 { background-color: #1e293b !important; } /* slate-800 */
+      .dark .focus\:bg-white:focus { background-color: #1e293b !important; } /* slate-800 */
+
+      /* Special elements */
+      .dark .prose, .dark .prose * {
+        color: #e2e8f0 !important;
+      }
+
+      /* Ensure contrast for readability */
+      .dark .text-blue-800 { color: #93c5fd !important; } /* lighter blue for contrast */
+      .dark .text-red-600 { color: #fca5a5 !important; } /* lighter red for contrast */
+      .dark .text-amber-700 { color: #fbbf24 !important; } /* lighter amber for contrast */
+      .dark .text-green-600 { color: #4ade80 !important; } /* lighter green for contrast */
+
+      /* Enhanced bottom navigation styling */
+      .dark nav[aria-label="bottom navigation"], .dark nav.fixed.bottom-0 {
+        background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important; /* slate-700 to slate-800 */
+        backdrop-filter: blur(12px) !important;
+        box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.2) !important;
+        border-top: 1px solid #475569 !important; /* slate-600 */
+      }
+
+      .dark nav button {
+        transition: all 0.2s ease !important;
+        border-radius: 16px !important;
+        padding: 10px 8px !important;
+      }
+
+      .dark nav button:hover {
+        background-color: #475569 !important; /* slate-600 */
+        transform: translateY(-1px) !important;
+      }
+
+      /* Active button styling in bottom navigation */
+      .dark nav button:where([class*="text-slate-900"], [class*="dark:text-white"]) {
+        background-color: #4f46e5 !important; /* indigo-600 */
+        color: white !important;
+        box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3) !important;
+      }
+
+      /* Icon styling for bottom navigation */
+      .dark nav svg {
+        transition: all 0.2s ease !important;
+      }
+
+      /* Enhanced button styling throughout the app */
+      .dark .bg-blue-50.dark\:bg-blue-900\/20 {
+        background-color: rgba(79, 70, 229, 0.2) !important; /* indigo-500/20 */
+        border: 1px solid #4f46e5 !important;
+        color: #818cf8 !important; /* indigo-300 */
+      }
+
+      .dark .bg-white.dark\:bg-slate-800 {
+        background-color: #1e293b !important; /* slate-800 */
+        border: 1px solid #475569 !important; /* slate-600 */
+        color: #e2e8f0 !important; /* slate-200 */
+      }
+
+      .dark button.bg-gradient-to-r {
+        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3) !important;
+      }
+
+      .dark button.bg-gradient-to-r:hover {
+        transform: scale(1.02) !important;
+        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4) !important;
+      }
+
+      /* Card and container enhancements */
+      .dark .bg-white.shadow-2xl {
+        background-color: #1e293b !important; /* slate-800 */
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2) !important;
+      }
+
+      /* History view specific enhancements */
+      .dark .bg-white.rounded-2xl.border {
+        background-color: #1e293b !important; /* slate-800 */
+        border: 1px solid #334155 !important; /* slate-700 */
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1) !important;
+      }
+
+      .dark .bg-white.rounded-2xl.border:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
+        border-color: #4f46e5 !important; /* indigo-500 */
+        transform: translateY(-2px) !important;
+      }
+
+      /* Preview enhancements */
+      .dark .bg-white.shadow-2xl.shadow-slate-200\/60 {
+        background-color: #1e293b !important; /* slate-800 */
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2) !important;
+      }
+
+      /* Input fields enhancements */
+      .dark .bg-slate-50.dark\:bg-slate-950.focus\:bg-white.dark\:focus:bg-slate-900 {
+        background-color: #1e293b !important; /* slate-800 */
+        border: 2px solid #475569 !important; /* slate-600 */
+      }
+
+      .dark .bg-slate-50.dark\:bg-slate-950.focus\:bg-white.dark\:focus:bg-slate-900:focus {
+        border-color: #4f46e5 !important; /* indigo-500 */
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2) !important;
+      }
     </style>
   <script type="importmap">
 {
@@ -36,7 +208,6 @@
     "react": "https://aistudiocdn.com/react@^19.2.0",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
     "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0"
   }
 }
@@ -45,6 +216,13 @@
 </head>
   <body>
     <div id="root"></div>
-  <script type="module" src="/index.tsx"></script>
-</body>
+    <script>
+      // Apply saved theme immediately to prevent flash of unstyled content
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
+    <script type="module" src="/index.tsx"></script>
+  </body>
 </html>

@@ -16,53 +16,30 @@ export const generatePDFFromContent = async (content: string, filename: string =
   container.style.backgroundColor = 'white';
   container.style.fontFamily = 'Arial, sans-serif';
   
-  // Parse and render the content
+  // Parse and render the content as plain text - no markdown formatting
   const lines = content.split('\n');
   lines.forEach(line => {
     let element: HTMLElement;
-    
-    if (line.startsWith('###')) {
-      element = document.createElement('h3');
-      element.textContent = line.replace('###', '').trim();
-      element.style.fontSize = '18px';
-      element.style.fontWeight = 'bold';
-      element.style.textTransform = 'uppercase';
-      element.style.borderBottom = '2px solid #e5e7eb';
-      element.style.paddingBottom = '8px';
-      element.style.marginTop = '32px';
-      element.style.marginBottom = '16px';
-    } else if (line.startsWith('##')) {
-      element = document.createElement('h2');
-      element.textContent = line.replace('##', '').trim();
-      element.style.fontSize = '24px';
-      element.style.fontWeight = 'bold';
-      element.style.marginTop = '32px';
-      element.style.marginBottom = '12px';
-    } else if (line.startsWith('#')) {
-      element = document.createElement('h1');
-      element.textContent = line.replace('#', '').trim();
-      element.style.fontSize = '36px';
-      element.style.fontWeight = 'bold';
-      element.style.textAlign = 'center';
-      element.style.marginBottom = '40px';
-    } else if (line.startsWith('-')) {
-      element = document.createElement('li');
-      element.textContent = line.replace('-', '').trim();
-      element.style.marginLeft = '16px';
-      element.style.marginBottom = '8px';
-      element.style.paddingLeft = '4px';
-      element.style.listStyleType = 'disc';
-      element.style.display = 'list-item';
-    } else if (line.trim() === '') {
+
+    // Remove any markdown formatting characters but preserve the text
+    const cleanLine = line
+      .replace(/^#+\s*/, '')      // Remove #, ##, ### headers
+      .replace(/^-/, '')          // Remove list markers
+      .replace(/^\s*[-*]\s*/, '') // Remove other list markers
+      .trim();
+
+    if (cleanLine === '') {
       element = document.createElement('div');
       element.style.height = '8px';
     } else {
       element = document.createElement('p');
-      element.textContent = line;
+      element.textContent = cleanLine;
       element.style.marginBottom = '12px';
       element.style.lineHeight = '1.6';
+      element.style.fontSize = '12px';
+      element.style.color = '#000000'; // Ensure black text
     }
-    
+
     container.appendChild(element);
   });
   

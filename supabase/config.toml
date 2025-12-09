@@ -1,0 +1,14 @@
+[db]
+  [db.pooler]
+    enabled = false
+[auth]
+  enabled = true
+  [auth.email]
+    enable_signup = true
+[storage]
+  enabled = true
+[functions]
+  [functions.ai-resume-generation]
+    verify_jwt = false
+  [functions.pdf-parser]
+    verify_jwt = false

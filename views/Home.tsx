@@ -43,17 +43,23 @@ export const Home: React.FC<HomeProps> = ({ setView }) => {
       <nav className="absolute top-0 left-0 right-0 p-4 md:p-6 flex justify-between items-center z-10">
         <img src={Logo} alt="Resume Blaster Logo" className="w-40 md:w-48" />
         <div className="flex items-center space-x-4">
-          <button 
+          <button
             onClick={() => console.log('About clicked')} // Placeholder
             className="text-white text-sm md:text-base font-semibold hover:text-blue-200 transition-colors hidden md:block"
           >
             About
           </button>
-          <button 
+          <button
             onClick={() => console.log('Contact clicked')} // Placeholder
             className="text-white text-sm md:text-base font-semibold hover:text-blue-200 transition-colors hidden md:block"
           >
             Contact
+          </button>
+          <button
+            onClick={() => setView(ViewState.ADMIN)}
+            className="text-white text-sm md:text-base font-semibold hover:text-blue-200 transition-colors hidden md:block"
+          >
+            Admin
           </button>
           <Button 
             size="sm" 

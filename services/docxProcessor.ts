@@ -96,7 +96,13 @@ function saveSection(data: Record<string, any>, section: string, content: string
 
 function parseListItems(content: string[]): string[] {
   return content
-    .map(line => line.replace(/^[-•*]\s*/, '').trim())
+    .map(line => {
+      // Remove markdown list markers and clean the line
+      return line
+        .replace(/^[-•*]\s*/, '')  // Remove list markers
+        .replace(/^#+\s*/, '')     // Remove header markers
+        .trim();
+    })
     .filter(line => line.length > 0);
 }
 

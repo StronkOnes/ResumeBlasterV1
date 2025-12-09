@@ -1,0 +1,16 @@
+services:
+- type: web
+  name: resume-blaster
+  env: static
+  buildCommand: |
+    npm install
+    npm run build
+  staticPublishPath: ./dist
+  envVars:
+  - key: VITE_SUPABASE_URL
+    value: https://your-project.supabase.co
+  - key: VITE_SUPABASE_ANON_KEY
+    sync: false  # This will be set in the dashboard
+
+# Note: The GEMINI_API_KEY is not needed here as it's used in Supabase Edge Functions
+# which are deployed separately and can securely store the API key in the Supabase project

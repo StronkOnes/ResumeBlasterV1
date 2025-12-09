@@ -3,6 +3,7 @@ import { ViewState, ResumeData, OptimizationMode } from '../types';
 import { Icons } from '../components/Icons';
 import { generateTemplatePDF } from '../services/templatePdfService';
 import { generateDocxResume } from '../services/docxProcessor';
+import { deleteResume } from '../services/resumeService';
 import { ResumeTemplate } from '../types';
 
 interface HistoryProps {
@@ -11,11 +12,13 @@ interface HistoryProps {
   isPro: boolean;
   onPreviewResume?: (resume: ResumeData) => void;
   onEditResume?: (resume: ResumeData) => void;
+  onDeleteResume?: (resumeId: string) => void;
 }
 
-export const History: React.FC<HistoryProps> = ({ setView, resumes, isPro, onPreviewResume, onEditResume }) => {
+export const History: React.FC<HistoryProps> = ({ setView, resumes, isPro, onPreviewResume, onEditResume, onDeleteResume }) => {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [downloadingDocxId, setDownloadingDocxId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handlePreview = (resume: ResumeData) => {
     if (onPreviewResume) {
@@ -54,6 +57,33 @@ export const History: React.FC<HistoryProps> = ({ setView, resumes, isPro, onPre
       alert('Failed to generate DOCX. Please try again.');
     } finally {
       setDownloadingDocxId(null);
+    }
+  };
+
+  const handleDelete = async (resume: ResumeData) => {
+    if (!resume.id) return;
+
+    if (!window.confirm('Are you sure you want to delete this resume? This action cannot be undone.')) {
+      return;
+    }
+
+    setDeletingId(resume.id);
+    try {
+      const success = await deleteResume(resume.id);
+      if (success) {
+        // Update the parent component's state to remove the deleted resume
+        if (onDeleteResume) {
+          onDeleteResume(resume.id);
+        }
+        console.log('Resume deleted successfully');
+      } else {
+        alert('Failed to delete resume. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting resume:', error);
+      alert('Failed to delete resume. Please try again.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -133,13 +163,13 @@ export const History: React.FC<HistoryProps> = ({ setView, resumes, isPro, onPre
               </div>
               
               <div className="flex space-x-2">
-                <button 
+                <button
                   onClick={() => handlePreview(resume)}
                   className="flex-1 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-800 dark:text-blue-200 py-2.5 rounded-xl text-xs font-bold transition-colors"
                 >
                   Preview
                 </button>
-                <button 
+                <button
                   onClick={() => handleDownloadDocx(resume)}
                   disabled={downloadingDocxId === resume.id}
                   className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 py-2.5 rounded-xl text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
@@ -157,7 +187,7 @@ export const History: React.FC<HistoryProps> = ({ setView, resumes, isPro, onPre
                     </>
                   )}
                 </button>
-                <button 
+                <button
                   onClick={() => handleDownload(resume)}
                   disabled={downloadingId === resume.id}
                   className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 py-2.5 rounded-xl text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
@@ -175,12 +205,24 @@ export const History: React.FC<HistoryProps> = ({ setView, resumes, isPro, onPre
                     </>
                   )}
                 </button>
-                <button 
+                <button
                   onClick={() => handleEdit(resume)}
                   className="w-10 flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-xl transition-colors hover:text-blue-600 dark:hover:text-blue-400"
                   title="Edit Resume"
                 >
                   <Icons.PenTool size={16} />
+                </button>
+                <button
+                  onClick={() => handleDelete(resume)}
+                  disabled={deletingId === resume.id}
+                  className="w-10 flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 dark:text-red-400 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Delete Resume"
+                >
+                  {deletingId === resume.id ? (
+                    <Icons.Sparkles size={16} className="animate-spin" />
+                  ) : (
+                    <Icons.Trash size={16} />
+                  )}
                 </button>
               </div>
             </div>

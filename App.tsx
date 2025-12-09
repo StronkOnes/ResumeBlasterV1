@@ -7,6 +7,8 @@ import { History } from './views/History';
 import { Upgrade } from './views/Upgrade';
 import { Auth } from './views/Auth';
 import { EditResume } from './views/EditResume';
+import { AdminLogin } from './views/AdminLogin';
+import { AdminDashboard } from './views/AdminDashboard';
 import { ViewState, ResumeData, OptimizationMode, ResumeTemplate } from './types';
 import { supabase } from './services/supabaseClient'; // Import Supabase client
 import { Session } from '@supabase/supabase-js'; // Import Session type
@@ -20,7 +22,16 @@ export default function App() {
   const [editingResume, setEditingResume] = useState<ResumeData | null>(null);
   const [isPro, setIsPro] = useState(false);
   const [resumes, setResumes] = useState<ResumeData[]>([]); // Initialize empty, will fetch from Supabase
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Check for user preference in localStorage, otherwise use system preference
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      return savedTheme === 'dark';
+    } else {
+      // Default to system preference
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+  });
   const [loading, setLoading] = useState(true);
 
   // Fetch user's resumes from Supabase
@@ -63,17 +74,32 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Initialize dark mode from system preference or local storage could go here
+  // Initialize dark mode from system preference or local storage on initial load
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [isDarkMode]);
+  }, []);
 
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
+    console.log('Toggle theme clicked');
+    // Direct DOM manipulation to ensure theme toggle works
+    const isCurrentlyDark = document.documentElement.classList.contains('dark');
+    console.log('Is currently dark:', isCurrentlyDark);
+
+    if (isCurrentlyDark) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      setIsDarkMode(false);
+      console.log('Switched to light mode');
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      setIsDarkMode(true);
+      console.log('Switched to dark mode');
+    }
   };
 
   const handlePreviewSavedResume = (resume: ResumeData) => {
@@ -85,6 +111,10 @@ export default function App() {
   const handleEditResume = (resume: ResumeData) => {
     setEditingResume(resume);
     setCurrentView(ViewState.EDIT);
+  };
+
+  const handleDeleteResume = (resumeId: string) => {
+    setResumes(resumes.filter(r => r.id !== resumeId));
   };
 
   const handleEditSaveSuccess = (updatedResume: ResumeData) => {
@@ -134,6 +164,16 @@ export default function App() {
       return <div>Loading...</div>; // Or a proper loading spinner component
     }
 
+    // Handle admin view separately before protected views check
+    if (currentView === ViewState.ADMIN) {
+      // Check if admin is already logged in
+      if (localStorage.getItem('adminLoggedIn')) {
+        return <AdminDashboard setView={setCurrentView} />;
+      } else {
+        return <AdminLogin setView={setCurrentView} onLoginSuccess={() => setCurrentView(ViewState.ADMIN)} />;
+      }
+    }
+
     const protectedViews: ViewState[] = [ViewState.EDITOR, ViewState.TAILOR, ViewState.PREVIEW, ViewState.HISTORY, ViewState.UPGRADE, ViewState.EDIT];
     if (protectedViews.includes(currentView) && !session) {
       // If user tries to access a protected view without being logged in, show Auth
@@ -156,12 +196,13 @@ export default function App() {
           }
         }} />;
       case ViewState.HISTORY:
-        return <History 
-          setView={setCurrentView} 
-          resumes={resumes} 
+        return <History
+          setView={setCurrentView}
+          resumes={resumes}
           isPro={isPro}
           onPreviewResume={handlePreviewSavedResume}
           onEditResume={handleEditResume}
+          onDeleteResume={handleDeleteResume}
         />;
       case ViewState.EDIT:
         return editingResume ? (
