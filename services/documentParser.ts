@@ -69,7 +69,18 @@ async function parsePdfFile(file: File): Promise<string> {
     }
 
     const data = await response.json();
-    return data.text || '';
+
+    // Check if there was an error from the function
+    if (data.error) {
+      throw new Error(data.error);
+    }
+
+    // Check if text was extracted
+    if (!data.text || typeof data.text !== 'string') {
+      throw new Error('No text content found in the document. Please ensure the file contains text.');
+    }
+
+    return data.text;
   } catch (error) {
     console.error('Error parsing PDF via Supabase:', error);
     throw new Error('Failed to parse PDF file. Please ensure the file is not corrupted or password-protected.');
