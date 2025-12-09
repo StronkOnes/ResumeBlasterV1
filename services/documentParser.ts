@@ -48,8 +48,9 @@ async function parsePdfFile(file: File): Promise<string> {
     }
 
     // Convert file to base64 for transmission
+    // Use FileReader to properly convert to base64 to avoid stack overflow
     const arrayBuffer = await file.arrayBuffer();
-    const base64String = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const base64String = arrayBufferToBase64(arrayBuffer);
 
     // Call the Supabase Edge Function
     const response = await fetch(`${supabaseUrl}/functions/v1/pdf-parser`, {
@@ -73,6 +74,16 @@ async function parsePdfFile(file: File): Promise<string> {
     console.error('Error parsing PDF via Supabase:', error);
     throw new Error('Failed to parse PDF file. Please ensure the file is not corrupted or password-protected.');
   }
+}
+
+// Helper function to convert ArrayBuffer to Base64 without stack overflow
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
 }
 
 /**
