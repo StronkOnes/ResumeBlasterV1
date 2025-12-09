@@ -1,7 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 // Using pdfjs-dist in the Deno environment for more reliable PDF parsing
-import { getDocument } from 'https://esm.run/pdfjs-dist@4.0.379/legacy/build/pdf.js';
+import { getDocument } from 'https://unpkg.com/pdfjs-dist@4.0.379/legacy/build/pdf.js';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
